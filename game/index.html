@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SITELINE — Relay A</title>
+<style>
+  :root{
+    --cream:#f4e6cb; --sand:#c9ac82; --teal:#1f5f63; --tealDark:#0f2b2f;
+    --orange:#e08a4a; --ink:#0b1417; --steel:#2b3439;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0b1417;color:var(--cream);
+    font-family:ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;user-select:none}
+  canvas{display:block;width:100%;height:100%}
+  #hud{position:fixed;inset:0;pointer-events:none;letter-spacing:.02em}
+  .panel{position:absolute;background:linear-gradient(180deg,rgba(11,20,23,.88),rgba(11,20,23,.62));
+    border:1px solid rgba(224,138,74,.45);border-radius:3px;box-shadow:0 6px 22px rgba(0,0,0,.35)}
+  .label{font-size:10px;letter-spacing:.22em;color:#a9b3ad;text-transform:uppercase}
+  #topbar{top:14px;left:50%;transform:translateX(-50%);display:flex;gap:18px;align-items:center;
+    padding:8px 18px;min-width:430px;justify-content:center}
+  #topbar .team{display:flex;gap:8px;align-items:baseline}
+  #topbar .atk{color:var(--orange)} #topbar .def{color:#7fd3c8}
+  #topbar .score{font-size:26px;font-weight:700}
+  #clock{font-size:27px;font-weight:700;min-width:92px;text-align:center;color:var(--cream)}
+  #roundLabel{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.3em;color:#c9b08a}
+  #vitals{left:22px;bottom:22px;padding:12px 16px;min-width:236px}
+  .bar{height:8px;background:#22302f;margin:6px 0 10px;position:relative;overflow:hidden}
+  .bar i{position:absolute;inset:0;width:100%;display:block;transition:width .12s linear}
+  #hpBar i{background:linear-gradient(90deg,#d8583f,#e08a4a)}
+  #apBar i{background:linear-gradient(90deg,#2b7f86,#7fd3c8)}
+  .row{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
+  .big{font-size:24px;font-weight:700}
+  #ammo{right:22px;bottom:22px;padding:12px 18px;text-align:right;min-width:196px}
+  #ammoMag{font-size:44px;font-weight:700;line-height:1}
+  #ammoReserve{font-size:18px;color:#b9a888}
+  #weaponName{font-size:12px;letter-spacing:.18em;color:var(--orange);margin-top:6px}
+  #utility{right:22px;bottom:132px;padding:8px 12px;font-size:12px;display:flex;gap:14px}
+  #economy{left:22px;bottom:132px;padding:8px 12px;font-size:12px;display:flex;gap:14px}
+  #money{color:#f0c56a;font-weight:700}
+  #crosshair{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%)}
+  #crosshair i{position:absolute;background:#f6ecd8;box-shadow:0 0 2px #000}
+  #crosshair i:nth-child(1){left:9px;top:0;width:2px;height:7px}
+  #crosshair i:nth-child(2){left:9px;bottom:0;width:2px;height:7px}
+  #crosshair i:nth-child(3){top:9px;left:0;height:2px;width:7px}
+  #crosshair i:nth-child(4){top:9px;right:0;height:2px;width:7px}
+  #hitmarker{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%) rotate(45deg);opacity:0}
+  #hitmarker i{position:absolute;background:#ffd9a0;width:2px;height:9px}
+  #hitmarker i:nth-child(1){left:2px;top:0}#hitmarker i:nth-child(2){right:2px;top:0}
+  #hitmarker i:nth-child(3){left:2px;bottom:0}#hitmarker i:nth-child(4){right:2px;bottom:0}
+  #hitmarker.on{opacity:1}
+  #feed{position:absolute;right:22px;top:18px;display:flex;flex-direction:column;gap:4px;align-items:flex-end;font-size:12px}
+  #feed div{background:rgba(11,20,23,.72);border-left:2px solid var(--orange);padding:3px 8px}
+  #plantWrap{position:absolute;left:50%;top:62%;transform:translateX(-50%);width:280px;text-align:center;display:none}
+  #plantWrap.on{display:block}
+  #plantBar{height:7px;background:#22302f;margin-top:6px}
+  #plantBar i{display:block;height:100%;width:0;background:var(--orange)}
+  #bombStatus{position:absolute;top:96px;left:50%;transform:translateX(-50%);font-size:13px;color:#ffb066;display:none}
+  #bombStatus.on{display:block}
+  #overlay{position:fixed;inset:0;display:none;place-items:center;background:radial-gradient(ellipse at center,rgba(11,20,23,.55),rgba(6,10,12,.92))}
+  #overlay.on{display:grid}
+  #overlay .card{padding:26px 40px;text-align:center;border:1px solid rgba(224,138,74,.5);background:rgba(9,17,20,.9)}
+  #overlay h1{margin:0;font-size:34px;letter-spacing:.16em}
+  #overlay p{margin:10px 0 0;color:#c3b393;font-size:13px}
+  #buy{position:fixed;inset:0;display:none;place-items:center;background:rgba(10,20,24,.52);pointer-events:auto}
+  #buy.on{display:grid}
+  #buy .wrap{width:760px;max-width:94vw;border:1px solid rgba(224,138,74,.75);background:linear-gradient(180deg,#173036,#10222a);box-shadow:0 18px 60px rgba(0,0,0,.55)}
+  #buy header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(224,138,74,.35)}
+  #buy h2{margin:0;font-size:18px;letter-spacing:.22em;color:var(--orange)}
+  #buy .funds{font-size:14px;color:#f0c56a}
+  #buy .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px}
+  .item{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid rgba(210,196,164,.34);background:rgba(38,58,60,.82);cursor:pointer}
+  .item:hover{border-color:var(--orange);background:rgba(42,60,60,.85)}
+  .item.locked{opacity:.45;cursor:not-allowed}
+  .item b{font-size:13px;letter-spacing:.06em}
+  .item small{display:block;color:#a89c86;font-size:11px;margin-top:2px}
+  .item .price{color:#f0c56a;font-size:13px}
+  .item .key{display:inline-block;min-width:18px;text-align:center;border:1px solid #4a5b58;color:#b9cdc7;font-size:10px;padding:1px 3px;margin-right:6px}
+  #buy footer{padding:10px 20px 16px;color:#8f9a94;font-size:11px;letter-spacing:.1em}
+  #hint{position:absolute;left:50%;bottom:86px;transform:translateX(-50%);font-size:12px;color:#d8c7a4;
+    background:rgba(11,20,23,.7);padding:6px 12px;border:1px solid rgba(224,138,74,.3);display:none}
+  #hint.on{display:block}
+  #start{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 40%,#24414c,#080f12 72%);z-index:5}
+  #start .inner{text-align:center;max-width:640px;padding:0 24px}
+  #start h1{margin:0;font-size:64px;letter-spacing:.34em;color:var(--cream);text-shadow:0 0 28px rgba(224,138,74,.4)}
+  #start h1 span{color:var(--orange)}
+  #start p{color:#b9ab8c;font-size:13px;line-height:1.9;letter-spacing:.04em}
+  #start kbd{border:1px solid #52605c;padding:1px 5px;font-size:11px;color:#dfd0b0}
+  #play{margin-top:18px;padding:12px 40px;font:inherit;font-size:14px;letter-spacing:.2em;color:#0b1417;background:var(--orange);border:0;cursor:pointer}
+  #play:hover{background:#f0a45e}
+  #loading{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);color:#c9b08a;font-size:12px;letter-spacing:.2em}
+  #err{position:fixed;left:12px;bottom:12px;color:#ff9c7a;font-size:11px;max-width:60vw;white-space:pre-wrap}
+</style>
+<script type="importmap">
+{"imports":{"three":"./three.module.min.js"}}
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="hud" aria-hidden="true">
+  <div id="topbar" class="panel">
+    <div class="team atk"><span class="label">Attack</span><span class="score" id="scoreAtk">0</span></div>
+    <div id="clock">2:00</div>
+    <div class="team def"><span class="score" id="scoreDef">0</span><span class="label">Defend</span></div>
+  </div>
+  <div id="roundLabel">ROUND 1 · BUY PHASE</div>
+  <div id="feed"></div>
+  <div id="bombStatus">CHARGE ARMED · HOLD <b>F</b> TO DEFUSE</div>
+  <div id="crosshair"><i></i><i></i><i></i><i></i></div>
+  <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
+  <div id="plantWrap" class="panel"><div class="label">PLANTING CHARGE</div><div id="plantBar"><i></i></div></div>
+  <div id="economy" class="panel"><span>$<b id="money">800</b></span><span class="label">mission funds</span></div>
+  <div id="utility" class="panel"><span>FRAG <b id="grenades">1</b></span><span>DEFUSE <b id="defuseKit">—</b></span></div>
+  <div id="vitals" class="panel">
+    <div class="row"><span class="label">Vitals</span><span class="big" id="hp">100</span></div>
+    <div class="bar" id="hpBar"><i></i></div>
+    <div class="row"><span class="label">Armour</span><span id="ap">0</span></div>
+    <div class="bar" id="apBar"><i style="width:0%"></i></div>
+  </div>
+  <div id="ammo" class="panel">
+    <div><span id="ammoMag">30</span> <span id="ammoReserve">/ 90</span></div>
+    <div id="weaponName">VARL-7</div>
+  </div>
+  <div id="hint">HOLD <b>E</b> ON SITE A TO PLANT THE CHARGE</div>
+</div>
+<div id="buy" role="dialog" aria-label="Buy menu">
+  <div class="wrap">
+    <header><h2>REQUISITION</h2><div class="funds">$<span id="buyMoney">800</span></div></header>
+    <div class="grid" id="buyGrid"></div>
+    <footer>1–6 buy · B or ESC close · purchases only during the buy phase</footer>
+  </div>
+</div>
+<div id="overlay"><div class="card"><h1 id="ovTitle">ELIMINATED</h1><p id="ovSub">spectating · next round in a moment</p></div></div>
+<div id="loading">BUILDING RELAY A…</div>
+<div id="start">
+  <div class="inner">
+    <h1>SITE<span>LINE</span></h1>
+    <p>Two lanes. One relay hall. Plant the charge at SITE A or hold the doors until the clock runs out.<br>
+    <kbd>WASD</kbd> move · <kbd>Shift</kbd> walk · <kbd>Ctrl</kbd> crouch · <kbd>Space</kbd> jump · <kbd>LMB</kbd> fire · <kbd>R</kbd> reload<br>
+    <kbd>G</kbd> frag · <kbd>E</kbd> plant · <kbd>F</kbd> defuse · <kbd>B</kbd> buy · <kbd>1</kbd>-<kbd>3</kbd> weapon</p>
+    <button id="play">ENTER RELAY</button>
+  </div>
+</div>
+<div id="err"></div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

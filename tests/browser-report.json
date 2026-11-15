@@ -1,0 +1,166 @@
+{
+ "results": [
+  {
+   "test": "webgl2 context",
+   "result": "PASS",
+   "detail": "firefox/llvmpipe"
+  },
+  {
+   "test": "click-to-play starts the match",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "test": "buy menu purchase charges money and grants armour",
+   "result": "PASS",
+   "detail": "money 800->150, armour=100"
+  },
+  {
+   "test": "buy phase ends and the round goes live",
+   "result": "PASS",
+   "detail": "phase=live timer=114.04"
+  },
+  {
+   "test": "seven bots spawned, both teams present",
+   "result": "PASS",
+   "detail": "alive=7"
+  },
+  {
+   "test": "approach-lane capture has enemies on screen",
+   "result": "PASS",
+   "detail": "enemies=4"
+  },
+  {
+   "test": "capture 1-approach-lane.jpg: caps",
+   "result": "PASS",
+   "detail": "{\"size\": [1280, 800], \"bytes\": 60211}"
+  },
+  {
+   "test": "capture 1-approach-lane.jpg: not black",
+   "result": "PASS",
+   "detail": "mean=[89, 69, 41] dark=0.428"
+  },
+  {
+   "test": "firefight: player alive at shutter",
+   "result": "PASS",
+   "detail": "hp=100"
+  },
+  {
+   "test": "firefight: enemy in frame",
+   "result": "PASS",
+   "detail": "enemies=3"
+  },
+  {
+   "test": "firefight: firing consumed ammo",
+   "result": "PASS",
+   "detail": "mag=29"
+  },
+  {
+   "test": "capture 2-live-firefight.jpg: caps",
+   "result": "PASS",
+   "detail": "{\"size\": [1280, 800], \"bytes\": 78365}"
+  },
+  {
+   "test": "capture 2-live-firefight.jpg: not black",
+   "result": "PASS",
+   "detail": "mean=[80, 84, 71] dark=0.007"
+  },
+  {
+   "test": "firing consumes ammo and reload refills the magazine",
+   "result": "PASS",
+   "detail": "{\"afterFire\": 28, \"afterReload\": 30, \"reserve\": 88}"
+  },
+  {
+   "test": "simulation cost under 260 ms per simulated second",
+   "result": "PASS",
+   "detail": "75.0 ms"
+  },
+  {
+   "test": "objective page is live with no bots",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "test": "charge plants on site with a live fuse",
+   "result": "PASS",
+   "detail": "{\"state\": \"armed\", \"timer\": 39.5, \"x\": 0, \"z\": -10}"
+  },
+  {
+   "test": "detonation wins the round for the attackers",
+   "result": "PASS",
+   "detail": "roundEnd {'attack': 1, 'defend': 0}"
+  },
+  {
+   "test": "next round starts and score persists",
+   "result": "PASS",
+   "detail": "round=2 score={'attack': 1, 'defend': 0}"
+  },
+  {
+   "test": "buy menu opens on B",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "test": "capture 3-buy-menu.jpg: caps",
+   "result": "PASS",
+   "detail": "{\"size\": [1280, 800], \"bytes\": 79908}"
+  },
+  {
+   "test": "capture 3-buy-menu.jpg: not black",
+   "result": "PASS",
+   "detail": "mean=[58, 61, 55] dark=0.0"
+  },
+  {
+   "test": "zero page errors",
+   "result": "PASS",
+   "detail": ""
+  }
+ ],
+ "screenshots": [
+  {
+   "size": [
+    1280,
+    800
+   ],
+   "mean": [
+    89,
+    69,
+    41
+   ],
+   "dark_fraction": 0.428,
+   "palette_bins": 44,
+   "path": "screenshots/1-approach-lane.jpg",
+   "bytes": 60211
+  },
+  {
+   "size": [
+    1280,
+    800
+   ],
+   "mean": [
+    80,
+    84,
+    71
+   ],
+   "dark_fraction": 0.007,
+   "palette_bins": 61,
+   "path": "screenshots/2-live-firefight.jpg",
+   "bytes": 78365
+  },
+  {
+   "size": [
+    1280,
+    800
+   ],
+   "mean": [
+    58,
+    61,
+    55
+   ],
+   "dark_fraction": 0.0,
+   "palette_bins": 17,
+   "path": "screenshots/3-buy-menu.jpg",
+   "bytes": 79908
+  }
+ ]
+}

@@ -1,0 +1,1 @@
+{"name":"siteline","private":true,"type":"module","scripts":{"test":"node tests/logic.mjs","start":"node serve.mjs","build":"node main.ts"}}

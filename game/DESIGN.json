@@ -1,0 +1,54 @@
+{
+  "name": "SITELINE",
+  "tagline": "Round-based tactical FPS at a desert relay station",
+  "teams": {
+    "attack": "Sappers: plant the charge at SITE A inside the relay hall",
+    "defend": "Custodians: hold the hall, defuse the charge, or run the clock out"
+  },
+  "controls": {
+    "WASD": "move (accelerated, with ground friction)",
+    "Shift": "reserved for walk speed",
+    "Ctrl/C": "crouch (slower, tighter spread, lower profile)",
+    "Space": "jump (airborne spread penalty)",
+    "Mouse": "look, pointer lock",
+    "LMB": "fire (automatic for rifle/SMG, single shot for the DMR)",
+    "R": "reload",
+    "G": "throw frag charge",
+    "E": "hold to plant on site",
+    "F": "hold to defuse with a kit",
+    "B/Esc": "buy menu",
+    "1-6": "quick buy while the buy phase runs"
+  },
+  "systems": {
+    "simulation": "Fixed 120 Hz step (sim.js + movement.js + bots.js) fully separated from rendering (main.js). Rendering reads state, never mutates it.",
+    "combat": "Hitscan traces against head/torso/leg boxes with a 4x head multiplier and 0.75x legs; armour halves body damage. Spread grows with speed, recoil and airtime, so stopping to aim pays.",
+    "weapons": "VARL-7 rifle (27 dmg, 600 rpm), Kestrel 9 SMG (18 dmg, 900 rpm), Warden 62 DMR (62 dmg, 200 rpm), frag charge, armour, defuse kit.",
+    "economy": "Start with $800; round win $3250, loss $1400, kill $300. Purchases only in the buy phase.",
+    "objective": "Charge plants in 3.2 s on site, 40 s fuse, 5 s defuse. Rounds end by detonation, defuse, elimination or timeout, then restart after 5 s.",
+    "bots": "Nav-graph A* with visibility-checked edges, throttled perception (~90 ms), reaction delay, noise investigation for gunfire and explosions, cover-seeking reloads and stuck re-pathing.",
+    "map": "Compact relay station: west arcade and east freight lane, splitter block, hall with two doors, crates and cargo cover, painted site decal and signage.",
+    "presentation": "Dusk palette (sand, teal, ember), procedural canvas textures, gradient sky dome, practical lamps, first-person viewmodel with muzzle flash and recoil."
+  },
+  "files": {
+    "game/main.js": "renderer, input, 120 Hz accumulator, debug hooks",
+    "game/sim.js": "fixed-step phase clock, planting/defusing, grenades, win conditions",
+    "game/movement.js": "player acceleration, crouch, jump, collision",
+    "game/combat.js": "weapons, hit traces, damage, noise events",
+    "game/bots.js": "bot perception, A* routes, hold/investigate/cover states",
+    "game/nav.js": "nav-graph construction and A*",
+    "game/map.js": "map layout, collision solids, ray tests",
+    "game/world.js": "three.js scene, materials, signage, viewmodel",
+    "game/hud.js": "DOM HUD, buy menu wiring, kill feed",
+    "game/state.js": "single state object, constants, round lifecycle",
+    "game/index.html": "import map for three 0.187.0, HUD markup and styling"
+  },
+  "debugHooks": {
+    "purpose": "test scaffolding used by tests/browser.py and the screenshot capture; not gameplay cheats",
+    "__advance(seconds)": "step the fixed simulation without a browser frame",
+    "__tp(x,z,yaw,pitch)": "teleport the player for deterministic captures",
+    "__debug()": "phase, timer, score, ammo, health, bomb and per-bot state",
+    "__buy(id) __fire() __reload()": "drive the same code paths the input layer calls",
+    "__pause(flag)": "freeze simulation time so a frame can be captured",
+    "?nobots=1": "spawn no bots for the objective test and buy-menu capture"
+  }
+}
