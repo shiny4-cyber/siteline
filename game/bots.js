@@ -42,7 +42,7 @@ function followPath(b,dt,speed){
   return false;
 }
 export function botThink(s,b,dt){
-  if(!b.alive)return;
+  if(!b.alive){b.defusing=0;return;}
   b.alive_for+=dt;
   b.scan-=dt;
   if(b.scan<=0){
@@ -56,6 +56,7 @@ export function botThink(s,b,dt){
   const t=b.target;
   const tx=t?t.x:0,tz=t?t.z:0;
   if(t&&t.alive){
+    b.defusing=0;
     const dx=tx-b.x,dz=tz-b.z,d=Math.hypot(dx,dz);
     b.yaw=Math.atan2(-dx,-dz);
     b.pitch=Math.atan2(1.5-(t.y||0)-1.2,Math.max(0.5,d))*0.35;
@@ -74,7 +75,7 @@ export function botThink(s,b,dt){
   }
   b.reaction=Math.max(0.2,b.reaction-dt*0.6);
   if(b.reload>0){
-    // Back off behind the nearest cover point while the magazine is out.
+    b.defusing=0;
     let cx=b.x,cz=b.z,best=1e9;
     for(let i=0;i<HOLD.length;i++){
       const hx=HOLD[i][0],hz=HOLD[i][1],d=(hx-b.x)**2+(hz-b.z)**2;
@@ -97,7 +98,7 @@ export function botThink(s,b,dt){
   if(s.bomb&&s.bomb.state==='armed'&&b.team==='defend'){
     const d=Math.hypot(s.bomb.x-b.x,s.bomb.z-b.z);
     b.state='defuse';
-    if(d>1.5){routeTo(s,b,s.bomb.x,s.bomb.z);followPath(b,dt,4.2);}
+    if(d>1.5){b.defusing=0;routeTo(s,b,s.bomb.x,s.bomb.z);followPath(b,dt,4.2);}
     else{
       b.yaw=Math.atan2(-(s.bomb.x-b.x),-(s.bomb.z-b.z));
       b.defusing+=dt;

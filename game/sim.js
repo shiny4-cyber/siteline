@@ -71,8 +71,9 @@ export function tick(s,dt){
   for(let i=0;i<s.actors.length;i++)tickWeapon(s.actors[i],dt);
   tickGrenades(s,dt);
   if(s.bomb){
+    if(s.bomb.state==='defused'){roundOver(s,'defend','charge defused');return;}
     if(s.bomb.state==='armed'){
-      if(p.alive&&p.hasDefuse&&s.input.defuse&&Math.hypot(p.x-s.bomb.x,p.z-s.bomb.z)<1.6){
+      if(p.team==='defend'&&p.alive&&p.hasDefuse&&s.input.defuse&&Math.hypot(p.x-s.bomb.x,p.z-s.bomb.z)<1.6){
         s.bomb.defuse=(s.bomb.defuse||0)+dt;
         if(s.bomb.defuse>=DEFUSE_TIME)s.bomb.state='defused';
       }else s.bomb.defuse=0;
@@ -92,8 +93,6 @@ export function tick(s,dt){
     if(!s.bomb){
       if(aliveOf(s,'defend')===0){roundOver(s,'attack','defenders eliminated');return;}
       if(aliveOf(s,'attack')===0){roundOver(s,'defend','attackers eliminated');return;}
-    }else if(s.bomb.state==='armed'){
-      if(aliveOf(s,'defend')===0&&aliveOf(s,'attack')===0){roundOver(s,'defend','attackers eliminated');return;}
     }
   }
   if(s.phaseTimer<=0){
