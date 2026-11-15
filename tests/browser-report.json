@@ -18,7 +18,7 @@
   {
    "test": "buy phase ends and the round goes live",
    "result": "PASS",
-   "detail": "phase=live timer=114.04"
+   "detail": "phase=live timer=114.1"
   },
   {
    "test": "seven bots spawned, both teams present",
@@ -33,12 +33,12 @@
   {
    "test": "capture 1-approach-lane.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 60211}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 82815}"
   },
   {
    "test": "capture 1-approach-lane.jpg: not black",
    "result": "PASS",
-   "detail": "mean=[89, 69, 41] dark=0.428"
+   "detail": "mean=[139, 121, 92] dark=0.007"
   },
   {
    "test": "firefight: player alive at shutter",
@@ -58,12 +58,12 @@
   {
    "test": "capture 2-live-firefight.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 78365}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 78122}"
   },
   {
    "test": "capture 2-live-firefight.jpg: not black",
    "result": "PASS",
-   "detail": "mean=[80, 84, 71] dark=0.007"
+   "detail": "mean=[81, 84, 71] dark=0.006"
   },
   {
    "test": "firing consumes ammo and reload refills the magazine",
@@ -73,7 +73,7 @@
   {
    "test": "simulation cost under 260 ms per simulated second",
    "result": "PASS",
-   "detail": "75.0 ms"
+   "detail": "83.0 ms"
   },
   {
    "test": "objective page is live with no bots",
@@ -83,7 +83,7 @@
   {
    "test": "charge plants on site with a live fuse",
    "result": "PASS",
-   "detail": "{\"state\": \"armed\", \"timer\": 39.5, \"x\": 0, \"z\": -10}"
+   "detail": "{\"state\": \"armed\", \"timer\": 39.52, \"x\": 0, \"z\": -10}"
   },
   {
    "test": "detonation wins the round for the attackers",
@@ -103,7 +103,7 @@
   {
    "test": "capture 3-buy-menu.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 79908}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 79584}"
   },
   {
    "test": "capture 3-buy-menu.jpg: not black",
@@ -123,14 +123,14 @@
     800
    ],
    "mean": [
-    89,
-    69,
-    41
+    139,
+    121,
+    92
    ],
-   "dark_fraction": 0.428,
-   "palette_bins": 44,
+   "dark_fraction": 0.007,
+   "palette_bins": 55,
    "path": "screenshots/1-approach-lane.jpg",
-   "bytes": 60211
+   "bytes": 82815
   },
   {
    "size": [
@@ -138,14 +138,14 @@
     800
    ],
    "mean": [
-    80,
+    81,
     84,
     71
    ],
-   "dark_fraction": 0.007,
-   "palette_bins": 61,
+   "dark_fraction": 0.006,
+   "palette_bins": 65,
    "path": "screenshots/2-live-firefight.jpg",
-   "bytes": 78365
+   "bytes": 78122
   },
   {
    "size": [
@@ -160,7 +160,7 @@
    "dark_fraction": 0.0,
    "palette_bins": 17,
    "path": "screenshots/3-buy-menu.jpg",
-   "bytes": 79908
+   "bytes": 79584
   }
  ]
 }
