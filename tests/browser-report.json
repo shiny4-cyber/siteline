@@ -18,12 +18,12 @@
   {
    "test": "capture 2-briefing.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 83373}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 85203}"
   },
   {
    "test": "capture 2-briefing.jpg: UI overlay filled",
    "result": "PASS",
-   "detail": "bins=26 bytes=83373"
+   "detail": "bins=25 bytes=85203"
   },
   {
    "test": "briefing dismisses and stays dismissed for the match",
@@ -38,7 +38,7 @@
   {
    "test": "buy phase ends and the round goes live",
    "result": "PASS",
-   "detail": "phase=live timer=114.05"
+   "detail": "phase=live timer=114.02"
   },
   {
    "test": "seven bots spawned, both teams present",
@@ -63,7 +63,7 @@
   {
    "test": "cover: enemy in frame",
    "result": "PASS",
-   "detail": "enemies=4"
+   "detail": "enemies=3"
   },
   {
    "test": "cover: objective line visible in HUD",
@@ -73,12 +73,12 @@
   {
    "test": "capture 1-cover-firefight.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 92168}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 130046}"
   },
   {
    "test": "capture 1-cover-firefight.jpg: readable scene",
    "result": "PASS",
-   "detail": "mean=[93, 87, 63] dark=0.002"
+   "detail": "mean=[70, 67, 50] dark=0.015"
   },
   {
    "test": "firing consumes ammo and reload refills the magazine",
@@ -88,7 +88,7 @@
   {
    "test": "simulation cost under 260 ms per simulated second",
    "result": "PASS",
-   "detail": "188.0 ms"
+   "detail": "34.0 ms"
   },
   {
    "test": "objective page is live with no bots",
@@ -113,12 +113,12 @@
   {
    "test": "capture 3-round-summary.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 70761}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 72316}"
   },
   {
    "test": "capture 3-round-summary.jpg: UI overlay filled",
    "result": "PASS",
-   "detail": "bins=21 bytes=70761"
+   "detail": "bins=21 bytes=72316"
   },
   {
    "test": "next round starts and score persists",
@@ -158,14 +158,14 @@
     800
    ],
    "mean": [
-    32,
-    37,
-    34
+    28,
+    33,
+    30
    ],
-   "dark_fraction": 0.04,
-   "palette_bins": 26,
+   "dark_fraction": 0.035,
+   "palette_bins": 25,
    "path": "screenshots/2-briefing.jpg",
-   "bytes": 83373
+   "bytes": 85203
   },
   {
    "size": [
@@ -173,14 +173,14 @@
     800
    ],
    "mean": [
-    93,
-    87,
-    63
+    70,
+    67,
+    50
    ],
-   "dark_fraction": 0.002,
-   "palette_bins": 75,
+   "dark_fraction": 0.015,
+   "palette_bins": 67,
    "path": "screenshots/1-cover-firefight.jpg",
-   "bytes": 92168
+   "bytes": 130046
   },
   {
    "size": [
@@ -190,12 +190,12 @@
    "mean": [
     15,
     26,
-    30
+    29
    ],
-   "dark_fraction": 0.002,
+   "dark_fraction": 0.0,
    "palette_bins": 21,
    "path": "screenshots/3-round-summary.jpg",
-   "bytes": 70761
+   "bytes": 72316
   }
  ]
 }

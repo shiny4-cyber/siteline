@@ -39,18 +39,39 @@ for(const btn of document.querySelectorAll('.mode')){
   });
 }
 // Character meshes are pooled once; the loop only moves them.
-const BOT_GEO={body:new THREE.BoxGeometry(0.62,0.86,0.4),head:new THREE.BoxGeometry(0.32,0.3,0.32),legs:new THREE.BoxGeometry(0.56,0.78,0.36)};
-const BOT_MAT={attack:new THREE.MeshStandardMaterial({color:'#d8894a',roughness:0.7}),defend:new THREE.MeshStandardMaterial({color:'#2f7f86',roughness:0.7}),head:new THREE.MeshStandardMaterial({color:'#e8cdac',roughness:0.8}),legs:new THREE.MeshStandardMaterial({color:'#39434a',roughness:0.85})};
+const BOT_GEO={body:new THREE.BoxGeometry(0.62,0.86,0.4),head:new THREE.BoxGeometry(0.32,0.3,0.32),legs:new THREE.BoxGeometry(0.56,0.78,0.36),
+  plate:new THREE.BoxGeometry(0.5,0.42,0.1),helmet:new THREE.BoxGeometry(0.36,0.14,0.36)};
+const BOT_MAT={
+  attack:new THREE.MeshStandardMaterial({color:'#d8894a',roughness:0.58,metalness:0.18}),
+  attackDark:new THREE.MeshStandardMaterial({color:'#8d4d22',roughness:0.66,metalness:0.22}),
+  defend:new THREE.MeshStandardMaterial({color:'#2f7f86',roughness:0.56,metalness:0.24}),
+  defendDark:new THREE.MeshStandardMaterial({color:'#164549',roughness:0.64,metalness:0.26}),
+  headA:new THREE.MeshStandardMaterial({color:'#e6c9a4',roughness:0.72}),
+  headD:new THREE.MeshStandardMaterial({color:'#c9b596',roughness:0.72}),
+  legs:new THREE.MeshStandardMaterial({color:'#39434a',roughness:0.8,metalness:0.12}),
+};
+const OUTLINE_MAT=new THREE.LineBasicMaterial({color:'#070c0e',transparent:true,opacity:0.9});
+const OUT_BODY=new THREE.EdgesGeometry(BOT_GEO.body),OUT_HEAD=new THREE.EdgesGeometry(BOT_GEO.head);
+const SHADOW_GEO=new THREE.CircleGeometry(0.52,18);
+const SHADOW_MAT=new THREE.MeshBasicMaterial({color:0x0a1012,transparent:true,opacity:0.46,depthWrite:false});
 const actorMeshes=[];
 for(let i=0;i<7;i++){
   const g=new THREE.Group();
   const legs=new THREE.Mesh(BOT_GEO.legs,BOT_MAT.legs);legs.position.y=0.39;
   const body=new THREE.Mesh(BOT_GEO.body,BOT_MAT.defend);body.position.y=1.1;
-  const head=new THREE.Mesh(BOT_GEO.head,BOT_MAT.head);head.position.y=1.66;
-  const visor=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.09,0.06),new THREE.MeshStandardMaterial({color:'#101a1c',roughness:0.2,metalness:0.6}));
+  const plate=new THREE.Mesh(BOT_GEO.plate,BOT_MAT.defendDark);plate.position.set(0,1.16,-0.21);
+  const head=new THREE.Mesh(BOT_GEO.head,BOT_MAT.headD);head.position.y=1.66;
+  const helmet=new THREE.Mesh(BOT_GEO.helmet,BOT_MAT.defendDark);helmet.position.y=1.79;
+  const visor=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.09,0.06),new THREE.MeshStandardMaterial({color:'#0b1416',roughness:0.18,metalness:0.7}));
   visor.position.set(0,1.66,-0.16);
-  g.add(legs,body,head,visor);g.castShadow=true;g.visible=false;scene.add(g);
-  actorMeshes.push({group:g,body,head});
+  const bodyEdges=new THREE.LineSegments(OUT_BODY,OUTLINE_MAT);
+  bodyEdges.position.copy(body.position);
+  const headEdges=new THREE.LineSegments(OUT_HEAD,OUTLINE_MAT);
+  headEdges.position.copy(head.position);
+  const shadow=new THREE.Mesh(SHADOW_GEO,SHADOW_MAT);
+  shadow.rotation.x=-Math.PI/2;shadow.visible=false;scene.add(shadow);
+  g.add(legs,body,plate,head,helmet,visor,bodyEdges,headEdges);g.castShadow=true;g.visible=false;scene.add(g);
+  actorMeshes.push({group:g,body,plate,head,helmet,shadow,bodyEdges,headEdges});
 }
 const tracerGeo=new THREE.BufferGeometry();
 const tracerPos=new Float32Array(6);
@@ -220,12 +241,23 @@ function render(){
   for(let i=0;i<state.actors.length&&i<actorMeshes.length;i++){
     const a=state.actors[i],m=actorMeshes[i];
     m.group.visible=a.alive;
+    m.shadow.visible=a.alive;
     if(!a.alive)continue;
     m.group.position.set(a.x,a.y,a.z);
     m.group.rotation.y=a.yaw;
-    m.body.material=a.team==='attack'?BOT_MAT.attack:BOT_MAT.defend;
+    const atk=a.team==='attack';
+    m.body.material=atk?BOT_MAT.attack:BOT_MAT.defend;
+    m.plate.material=atk?BOT_MAT.attackDark:BOT_MAT.defendDark;
+    m.helmet.material=atk?BOT_MAT.attackDark:BOT_MAT.defendDark;
+    m.head.material=atk?BOT_MAT.headA:BOT_MAT.headD;
     m.body.position.y=a.crouch?0.85:1.1;
     m.head.position.y=a.crouch?1.41:1.66;
+    m.helmet.position.y=a.crouch?1.54:1.79;
+    m.plate.position.y=a.crouch?0.91:1.16;
+    m.bodyEdges.position.y=m.body.position.y;
+    m.headEdges.position.y=m.head.position.y;
+    m.shadow.position.set(a.x,0.025,a.z);
+    m.shadow.scale.setScalar(a.crouch?0.85:1);
   }
   const b=state.bomb;
   bombGroup.visible=!!b;
