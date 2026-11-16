@@ -18,12 +18,22 @@
   {
    "test": "buy phase ends and the round goes live",
    "result": "PASS",
-   "detail": "phase=live timer=114.01"
+   "detail": "phase=live timer=113.97"
   },
   {
    "test": "seven bots spawned, both teams present",
    "result": "PASS",
    "detail": "alive=7"
+  },
+  {
+   "test": "HUD names the active objective site",
+   "result": "PASS",
+   "detail": "OBJECTIVE A \u00b7 RELAY A"
+  },
+  {
+   "test": "grenade stock is exposed to the HUD",
+   "result": "PASS",
+   "detail": "{\"frag\": 1, \"smoke\": 0, \"flash\": 0}"
   },
   {
    "test": "approach-lane capture has enemies on screen",
@@ -33,12 +43,12 @@
   {
    "test": "capture 1-approach-lane.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 83009}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 64731}"
   },
   {
    "test": "capture 1-approach-lane.jpg: not black",
    "result": "PASS",
-   "detail": "mean=[139, 121, 92] dark=0.007"
+   "detail": "mean=[93, 74, 47] dark=0.42"
   },
   {
    "test": "firefight: player alive at shutter",
@@ -58,12 +68,12 @@
   {
    "test": "capture 2-live-firefight.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 78069}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 81844}"
   },
   {
    "test": "capture 2-live-firefight.jpg: not black",
    "result": "PASS",
-   "detail": "mean=[80, 85, 71] dark=0.007"
+   "detail": "mean=[85, 89, 76] dark=0.002"
   },
   {
    "test": "firing consumes ammo and reload refills the magazine",
@@ -73,7 +83,7 @@
   {
    "test": "simulation cost under 260 ms per simulated second",
    "result": "PASS",
-   "detail": "48.0 ms"
+   "detail": "30.0 ms"
   },
   {
    "test": "objective page is live with no bots",
@@ -83,7 +93,7 @@
   {
    "test": "charge plants on site with a live fuse",
    "result": "PASS",
-   "detail": "{\"state\": \"armed\", \"timer\": 39.53, \"x\": 0, \"z\": -10}"
+   "detail": "{\"state\": \"armed\", \"timer\": 39.54, \"x\": 0, \"z\": -10}"
   },
   {
    "test": "detonation wins the round for the attackers",
@@ -96,6 +106,11 @@
    "detail": "round=2 score={'attack': 1, 'defend': 0}"
   },
   {
+   "test": "round summary is present with score and income",
+   "result": "PASS",
+   "detail": "{\"round\": 1, \"winner\": \"attack\", \"reason\": \"charge detonated\", \"score\": {\"attack\": 1, \"defend\": 0}, \"kills\": 0, \"deaths\": 0, \"income\": 3250, \"nextIncome\": 3500}"
+  },
+  {
    "test": "buy menu opens on B",
    "result": "PASS",
    "detail": ""
@@ -103,12 +118,12 @@
   {
    "test": "capture 3-buy-menu.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 79814}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 95306}"
   },
   {
    "test": "capture 3-buy-menu.jpg: not black",
    "result": "PASS",
-   "detail": "mean=[58, 61, 55] dark=0.0"
+   "detail": "mean=[57, 62, 57] dark=0.0"
   },
   {
    "test": "zero page errors",
@@ -123,14 +138,14 @@
     800
    ],
    "mean": [
-    139,
-    121,
-    92
+    93,
+    74,
+    47
    ],
-   "dark_fraction": 0.007,
-   "palette_bins": 55,
+   "dark_fraction": 0.42,
+   "palette_bins": 45,
    "path": "screenshots/1-approach-lane.jpg",
-   "bytes": 83009
+   "bytes": 64731
   },
   {
    "size": [
@@ -138,14 +153,14 @@
     800
    ],
    "mean": [
-    80,
     85,
-    71
+    89,
+    76
    ],
-   "dark_fraction": 0.007,
-   "palette_bins": 61,
+   "dark_fraction": 0.002,
+   "palette_bins": 71,
    "path": "screenshots/2-live-firefight.jpg",
-   "bytes": 78069
+   "bytes": 81844
   },
   {
    "size": [
@@ -153,14 +168,14 @@
     800
    ],
    "mean": [
-    58,
-    61,
-    55
+    57,
+    62,
+    57
    ],
    "dark_fraction": 0.0,
-   "palette_bins": 17,
+   "palette_bins": 20,
    "path": "screenshots/3-buy-menu.jpg",
-   "bytes": 79814
+   "bytes": 95306
   }
  ]
 }

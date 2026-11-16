@@ -114,7 +114,7 @@ def main():
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.on("console", lambda m: errors.append(m.type + ": " + m.text) if m.type == "error" else None)
 
-            page.goto(url + "/", wait_until="domcontentloaded")
+            page.goto(url + "/?seed=0", wait_until="domcontentloaded")
             page.wait_for_function("() => typeof window.__debug === 'function'", timeout=20000)
             page.wait_for_timeout(700)
             check("webgl2 context", page.evaluate(
@@ -140,6 +140,11 @@ def main():
             check("seven bots spawned, both teams present", live["botsAlive"] == 7 and
                   {b["team"] for b in live["bots"]} == {"attack", "defend"},
                   f"alive={live['botsAlive']}")
+            check("HUD names the active objective site",
+                  page.evaluate("() => document.getElementById('siteLabel').textContent.includes('OBJECTIVE')"),
+                  page.evaluate("() => document.getElementById('siteLabel').textContent"))
+            check("grenade stock is exposed to the HUD",
+                  all(k in live["stock"] for k in ("frag", "smoke", "flash")), json.dumps(live["stock"]))
 
             # ---- hero capture: west lane, site door and defenders in frame
             page.evaluate("() => { window.__pause(true); window.__tp(-9, 9, 0, -0.02); window.__advance(0.35); }")
@@ -193,11 +198,12 @@ def main():
             page.close()
             page2 = browser.new_page(viewport={"width": 1280, "height": 800})
             page2.on("pageerror", lambda e: errors.append(str(e)))
-            page2.goto(url + "/?nobots=1", wait_until="domcontentloaded")
+            page2.goto(url + "/?nobots=1&seed=0", wait_until="domcontentloaded")
             page2.wait_for_function("() => typeof window.__debug === 'function'", timeout=20000)
             page2.wait_for_timeout(800)
             page2.click("#play")
-            page2.evaluate("() => { window.__advance(12.4); window.__tp(0, -10, 0, 0); }")
+            site = page2.evaluate("() => window.__debug().site")
+            page2.evaluate("(site) => { window.__advance(12.4); window.__tp(site.x, site.z, 0, 0); }", site)
             check("objective page is live with no bots",
                   page2.evaluate("() => window.__debug().phase") == "live")
             page2.evaluate("() => { window.__state.input.plant = true; window.__advance(3.6); }")
@@ -214,12 +220,15 @@ def main():
             check("next round starts and score persists",
                   restarted["round"] == 2 and restarted["score"]["attack"] == 1,
                   f"round={restarted['round']} score={restarted['score']}")
+            check("round summary is present with score and income",
+                  ended.get("summary") is not None and "SCORE" in page2.evaluate("() => document.getElementById('ovStats').textContent"),
+                  json.dumps(ended.get("summary")))
 
             # ---- buy menu capture on a fresh page (buy phase, no bots)
             page2.close()
             page3 = browser.new_page(viewport={"width": 1280, "height": 800})
             page3.on("pageerror", lambda e: errors.append(str(e)))
-            page3.goto(url + "/?nobots=1", wait_until="domcontentloaded")
+            page3.goto(url + "/?nobots=1&seed=0", wait_until="domcontentloaded")
             page3.wait_for_function("() => typeof window.__debug === 'function'", timeout=20000)
             page3.wait_for_timeout(800)
             page3.click("#play")

@@ -1,13 +1,13 @@
 // Bot brain: A* routes, throttled perception, noise investigation, cover reloads, stuck re-paths.
 import {findPath,nearestNode,graph} from './nav.js';
-import {moveBody,visible,blocked,SITE,SOLIDS} from './map.js';
-import {fire,reload,tickWeapon,pushNoise} from './combat.js';
+import {moveBody,visible,blocked,SOLIDS,siteHolds} from './map.js';
+import {fire,reload,tickWeapon,pushNoise,smokeBlocks} from './combat.js';
 import {WEAPONS} from './state.js';
-const HOLD=[[-2,-12],[2,-13],[5,-9],[-6,-7]];
-const ROUTE_A=[[-10,6],[-8,-2],[-3,-6.4],[-2,-10]];
-const ROUTE_B=[[10,6],[9,-2],[8,-10],[3,-11]];
+const ROUTE_A=[[-10,6],[-8,-2],[-3,-6.4]];
+const ROUTE_B=[[10,6],[9,-2],[8,-10]];
 const tmpPath=[];
 export function scanTarget(s,b){
+  if((b.blind||0)>0)return null;
   let best=null,bestD=Infinity;
   for(let i=-1;i<s.actors.length;i++){
     const a=i<0?s.player:s.actors[i];
@@ -18,6 +18,7 @@ export function scanTarget(s,b){
     const facing=d>0.01?(dx*fx+dz*fz)/d:1;
     if(facing<0.15&&d>3)continue;
     if(!visible(b.x,b.z,a.x,a.z,1.45))continue;
+    if(smokeBlocks(s,b.x,b.z,a.x,a.z))continue;
     best=a;bestD=d;
   }
   return best;
@@ -43,6 +44,7 @@ function followPath(b,dt,speed){
 }
 export function botThink(s,b,dt){
   if(!b.alive){b.defusing=0;return;}
+  b.blind=Math.max(0,(b.blind||0)-dt);
   b.alive_for+=dt;
   b.scan-=dt;
   if(b.scan<=0){
@@ -76,9 +78,11 @@ export function botThink(s,b,dt){
   b.reaction=Math.max(0.2,b.reaction-dt*0.6);
   if(b.reload>0){
     b.defusing=0;
+    // Back off behind the nearest cover point while the magazine is out.
     let cx=b.x,cz=b.z,best=1e9;
-    for(let i=0;i<HOLD.length;i++){
-      const hx=HOLD[i][0],hz=HOLD[i][1],d=(hx-b.x)**2+(hz-b.z)**2;
+    const holds=siteHolds(s.site);
+    for(let i=0;i<holds.length;i++){
+      const hx=holds[i][0],hz=holds[i][1],d=(hx-b.x)**2+(hz-b.z)**2;
       if(d<best&&visible(hx,hz,b.x,b.z)===false){best=d;cx=hx;cz=hz;}
     }
     if(best<1e9){routeTo(s,b,cx,cz);followPath(b,dt,3.6);}
@@ -114,7 +118,8 @@ export function botThink(s,b,dt){
   if(b.state==='investigate'&&b.pathIndex<b.path.length){followPath(b,dt,4);return;}
   if(b.team==='attack'){
     const lane=b.id%2===0?ROUTE_B:ROUTE_A;
-    const wp=lane[Math.min(lane.length-1,Math.floor((s.time/6+b.id)%lane.length))];
+    const stage=Math.min(lane.length,Math.floor((s.time/7+b.id)%(lane.length+1)));
+    const wp=stage<lane.length?lane[stage]:[s.site.x,s.site.z];
     if(b.pathIndex>=b.path.length||b.goal!==nearestNode(wp[0],wp[1])){
       routeTo(s,b,wp[0],wp[1]);
     }
@@ -122,7 +127,8 @@ export function botThink(s,b,dt){
     b.state='advance';
     return;
   }
-  const hold=HOLD[b.id%HOLD.length];
+  const holds=siteHolds(s.site);
+  const hold=holds[b.id%holds.length];
   if(b.state!=='hold'){
     routeTo(s,b,hold[0],hold[1]);b.state='hold';
   }
@@ -151,4 +157,4 @@ export function stepBots(s,dt){
     }
   }
 }
-export {blocked,SITE,SOLIDS,WEAPONS};
+export {blocked,SOLIDS,WEAPONS};

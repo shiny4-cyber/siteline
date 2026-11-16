@@ -1,6 +1,13 @@
-// Relay A: two exterior lanes meet a two-door communications hall.
+// Relay station layout: two exterior lanes, a two-door hall and a transformer yard.
 // Coordinates are shared by rendering, collision, navigation and the tactical map.
-export const SITE = Object.freeze({x:0,z:-10,radius:3.2});
+export const SITES = Object.freeze([
+  {id:'alpha', name:'RELAY A', short:'A', x:0, z:-10, radius:3.2, accent:'#e08a4a'},
+  {id:'bravo', name:'TRANSFORMER B', short:'B', x:-12, z:2.5, radius:3.0, accent:'#7fd3c8'},
+]);
+export const SITE = SITES[0];
+export function siteFor(seed){
+  return SITES[Math.abs(seed|0)%SITES.length];
+}
 export const SOLIDS = [
   {x:-18,z:0,w:1,d:44,h:5,kind:'boundary'},
   {x:18,z:0,w:1,d:44,h:5,kind:'boundary'},
@@ -23,8 +30,11 @@ export const SOLIDS = [
   {x:14,z:-7,w:2.4,d:3,h:1.5,kind:'crate'},
   {x:4,z:-12,w:2.5,d:2,h:1.3,kind:'console'},
   {x:-4.5,z:-13,w:2,d:2,h:1.4,kind:'crate'},
+  // Transformer yard cover around site B.
+  {x:-15.5,z:4.5,w:1.8,d:1.8,h:1.2,kind:'crate'},
+  {x:-9.5,z:6.5,w:1.6,d:2.4,h:1.1,kind:'crate'},
 ];
-export const COVER = [[-10,7],[-12,-3],[-6,-13],[2,-12],[12,-9],[10,2],[-5,-3],[6,-15]];
+export const COVER = [[-10,7],[-12,-3],[-6,-13],[2,-12],[12,-9],[10,2],[-5,-3],[6,-15],[-13,5],[-10,4]];
 export function blocked(x,z,r=0.3,solids=SOLIDS,y=0){
   for(let i=0;i<solids.length;i++){
     const b=solids[i];
@@ -68,4 +78,13 @@ export function walkableEdge(ax,az,bx,bz){
   const d=Math.hypot(bx-ax,bz-az),n=Math.ceil(d/0.2);
   for(let i=0;i<=n;i++)if(blocked(ax+(bx-ax)*i/n,az+(bz-az)*i/n,0.38))return false;
   return true;
+}
+// Defensive anchors hang off the active site, so both layouts get their own holds.
+export function siteHolds(site){
+  return [
+    [site.x-2.2,site.z-2.0],
+    [site.x+2.0,site.z-2.6],
+    [site.x+3.6,site.z+1.4],
+    [site.x-3.4,site.z+2.2],
+  ];
 }

@@ -1,6 +1,6 @@
 // Render world: geometry generated from the same SOLIDS data used for collision.
 import * as THREE from 'three';
-import {SOLIDS,SITE} from './map.js';
+import {SOLIDS,SITES} from './map.js';
 export const PALETTE={
   skyTop:'#243a56',skyLow:'#f0a45e',ground:'#8d7b5f',sand:'#c9ac82',sandDark:'#a88c64',
   teal:'#1f5f63',tealDark:'#143e44',steel:'#3a4149',orange:'#e08a4a',cream:'#f2e3c8',
@@ -32,22 +32,29 @@ function signTexture(title,sub){
 }
 function groundTexture(){
   return canvasTexture(1024,1024,(g,w,h)=>{
+    const toU=x=>((x+20)/40)*w, toV=z=>((z+24)/48)*h;
     g.fillStyle=PALETTE.ground;g.fillRect(0,0,w,h);
     for(let i=0;i<4000;i++){g.fillStyle=`rgba(60,50,38,${Math.random()*0.16})`;g.fillRect(Math.random()*w,Math.random()*h,4,4);}
+    // West arcade: pale sandstone band. East freight: teal band. The two lanes read apart at a glance.
+    g.fillStyle='rgba(201,172,130,0.35)';g.fillRect(toU(-17),0,toU(8)-toU(-17),h);
+    g.fillStyle='rgba(31,95,99,0.30)';g.fillRect(toU(8),0,toU(17)-toU(8),h);
     g.strokeStyle='rgba(240,214,166,0.55)';g.lineWidth=7;g.setLineDash([26,18]);
-    g.beginPath();g.moveTo(150,1024);g.lineTo(150,640);g.stroke();
-    g.beginPath();g.moveTo(880,1024);g.lineTo(880,640);g.stroke();
+    g.beginPath();g.moveTo(toU(-11),h);g.lineTo(toU(-11),toV(2));g.stroke();
+    g.beginPath();g.moveTo(toU(11),h);g.lineTo(toU(11),toV(2));g.stroke();
     g.setLineDash([]);g.strokeStyle='rgba(240,214,166,0.85)';g.lineWidth=10;
-    g.strokeRect(300,110,430,380);
-    g.fillStyle='rgba(224,138,74,0.9)';g.font='bold 46px sans-serif';g.textAlign='center';
-    g.fillText('SITE A',515,90);
+    g.strokeRect(toU(-3.2),toV(-13.2),toU(3.2)-toU(-3.2),toV(-6.8)-toV(-13.2));
+    g.fillStyle='rgba(224,138,74,0.95)';g.font='bold 46px sans-serif';g.textAlign='center';
+    g.fillText('SITE A',toU(0),toV(-14.2));
+    g.fillStyle='rgba(127,211,200,0.95)';g.fillText('SITE B',toU(-12),toV(-0.6));
+    g.strokeStyle='rgba(127,211,200,0.8)';g.lineWidth=8;
+    g.beginPath();g.arc(toU(-12),toV(2.5),58,0,Math.PI*2);g.stroke();
   });
 }
 export function buildWorld(scene){
   scene.background=new THREE.Color(PALETTE.skyTop);
   scene.fog=new THREE.Fog('#e8b078',58,130);
-  const hemi=new THREE.HemisphereLight(0xffe2bc,0x4a5142,2.05);scene.add(hemi);
-  const sun=new THREE.DirectionalLight(0xffcf94,3.1);sun.position.set(-24,34,26);sun.castShadow=true;
+  const hemi=new THREE.HemisphereLight(0xffe2bc,0x4a5142,2.2);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xffd6a2,3.4);sun.position.set(-24,34,26);sun.castShadow=true;
   sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-40;sun.shadow.camera.right=40;
   sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;scene.add(sun);
   const skyTex=canvasTexture(8,256,(g,w,h)=>{
@@ -92,17 +99,38 @@ export function buildWorld(scene){
     const lintel=new THREE.Mesh(new THREE.BoxGeometry(3.4,0.18,0.22),trim);
     lintel.position.set(door[0],3.05,door[1]);scene.add(lintel);
   }
-  const signMat=new THREE.MeshBasicMaterial({map:signTexture('RELAY A','CHARGE SITE'),toneMapped:false});
-  for(const s of [[-3,-4.55,0.1],[8.06,-10,Math.PI/2]]){
-    const backing=new THREE.Mesh(new THREE.BoxGeometry(2.3,0.9,0.06),new THREE.MeshStandardMaterial({color:'#101d21'}));
-    backing.position.set(s[0],3.9,s[1]);backing.rotation.y=s[2];scene.add(backing);
-    const panel=new THREE.Mesh(new THREE.PlaneGeometry(2.2,0.82),signMat);
-    panel.position.set(s[0]+(s[2]?0.04:0),3.9,s[1]+(s[2]?0:-0.04));panel.rotation.y=s[2];scene.add(panel);
+  const signOf=(site)=>new THREE.MeshBasicMaterial({map:signTexture(site.name,`CHARGE SITE ${site.short}`),toneMapped:false});
+  const signSpecs=[
+    {site:SITES[0],pos:[-3,3.9,-4.55],rot:0,back:[2.3,0.9,0.06]},
+    {site:SITES[0],pos:[8.06,3.05,-10],rot:Math.PI/2,back:[2.3,0.9,0.06]},
+    {site:SITES[1],pos:[-12,3.25,6.1],rot:0,back:[2.6,1.0,0.08]},
+  ];
+  for(const spec of signSpecs){
+    const backing=new THREE.Mesh(new THREE.BoxGeometry(spec.back[0],spec.back[1],spec.back[2]),new THREE.MeshStandardMaterial({color:'#101d21'}));
+    backing.position.set(spec.pos[0],spec.pos[1],spec.pos[2]);backing.rotation.y=spec.rot;scene.add(backing);
+    const panel=new THREE.Mesh(new THREE.PlaneGeometry(spec.back[0]-0.1,spec.back[1]-0.1),signOf(spec.site));
+    panel.position.set(spec.pos[0]+(spec.rot?0.05:0),spec.pos[1],spec.pos[2]+(spec.rot?0:-0.05));
+    panel.rotation.y=spec.rot;scene.add(panel);
+    if(spec.site===SITES[1]){
+      for(const off of [-1.1,1.1]){
+        const leg=new THREE.Mesh(new THREE.BoxGeometry(0.12,3.3,0.12),new THREE.MeshStandardMaterial({color:PALETTE.steel,metalness:0.5,roughness:0.5}));
+        leg.position.set(spec.pos[0]+off,1.65,spec.pos[2]);scene.add(leg);
+      }
+    }
   }
-  const pad=new THREE.Mesh(new THREE.CircleGeometry(SITE.radius,40),new THREE.MeshStandardMaterial({color:'#c8642e',roughness:0.9,emissive:'#5a2408',emissiveIntensity:0.6}));
-  pad.rotation.x=-Math.PI/2;pad.position.set(SITE.x,0.02,SITE.z);scene.add(pad);
-  const ring=new THREE.Mesh(new THREE.RingGeometry(SITE.radius-0.08,SITE.radius,48),new THREE.MeshBasicMaterial({color:'#ffcf8a',side:THREE.DoubleSide,toneMapped:false}));
-  ring.rotation.x=-Math.PI/2;ring.position.set(SITE.x,0.04,SITE.z);scene.add(ring);
+  for(const site of SITES){
+    const pad=new THREE.Mesh(new THREE.CircleGeometry(site.radius,40),new THREE.MeshStandardMaterial({color:'#c8642e',roughness:0.9,emissive:'#5a2408',emissiveIntensity:0.6}));
+    pad.rotation.x=-Math.PI/2;pad.position.set(site.x,0.02,site.z);scene.add(pad);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(site.radius-0.08,site.radius,48),new THREE.MeshBasicMaterial({color:site.accent,side:THREE.DoubleSide,toneMapped:false}));
+    ring.rotation.x=-Math.PI/2;ring.position.set(site.x,0.04,site.z);scene.add(ring);
+  }
+  // West arcade colonnade: warm sandstone posts give that lane its own silhouette.
+  for(let i=0;i<5;i++){
+    const post=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.3,3.4,8),new THREE.MeshStandardMaterial({map:texSand,roughness:0.9}));
+    post.position.set(-16.2,1.7,12-i*4.4);post.castShadow=true;scene.add(post);
+    const cap=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.22,0.9),new THREE.MeshStandardMaterial({color:PALETTE.sandDark,roughness:0.9}));
+    cap.position.set(-16.2,3.5,12-i*4.4);scene.add(cap);
+  }
   for(const l of [[-9,4,0xffb066],[10,4,0xffb066],[-2,-13,0x9fe3d0],[6,-3,0xffb066]]){
     const lamp=new THREE.PointLight(l[2],26,22,2);lamp.position.set(l[0],4.3,l[1]);scene.add(lamp);
     const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),new THREE.MeshBasicMaterial({color:l[2],toneMapped:false}));

@@ -24,6 +24,8 @@
   #topbar .score{font-size:26px;font-weight:700}
   #clock{font-size:27px;font-weight:700;min-width:92px;text-align:center;color:var(--cream)}
   #roundLabel{position:absolute;top:64px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.3em;color:#c9b08a}
+  #siteLabel{position:absolute;top:84px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.24em;
+    color:#0b1417;background:rgba(224,138,74,.92);padding:2px 10px;border-radius:2px;font-weight:700}
   #vitals{left:22px;bottom:22px;padding:12px 16px;min-width:236px}
   .bar{height:8px;background:#22302f;margin:6px 0 10px;position:relative;overflow:hidden}
   .bar i{position:absolute;inset:0;width:100%;display:block;transition:width .12s linear}
@@ -104,13 +106,14 @@
     <div class="team def"><span class="score" id="scoreDef">0</span><span class="label">Defend</span></div>
   </div>
   <div id="roundLabel">ROUND 1 · BUY PHASE</div>
+  <div id="siteLabel">OBJECTIVE A · RELAY A</div>
   <div id="feed"></div>
   <div id="bombStatus">CHARGE ARMED · HOLD <b>F</b> TO DEFUSE</div>
   <div id="crosshair"><i></i><i></i><i></i><i></i></div>
   <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
   <div id="plantWrap" class="panel"><div class="label">PLANTING CHARGE</div><div id="plantBar"><i></i></div></div>
   <div id="economy" class="panel"><span>$<b id="money">800</b></span><span class="label">mission funds</span></div>
-  <div id="utility" class="panel"><span>FRAG <b id="grenades">1</b></span><span>DEFUSE <b id="defuseKit">—</b></span></div>
+  <div id="utility" class="panel"><span>FRAG/SMOKE/FLASH <b id="grenades">F1 S0 L0</b></span><span>DEFUSE <b id="defuseKit">—</b></span></div>
   <div id="vitals" class="panel">
     <div class="row"><span class="label">Vitals</span><span class="big" id="hp">100</span></div>
     <div class="bar" id="hpBar"><i></i></div>
@@ -127,17 +130,18 @@
   <div class="wrap">
     <header><h2>REQUISITION</h2><div class="funds">$<span id="buyMoney">800</span></div></header>
     <div class="grid" id="buyGrid"></div>
-    <footer>1–6 buy · B or ESC close · purchases only during the buy phase</footer>
+    <footer>1–0 buy · B or ESC close · purchases only during the buy phase</footer>
   </div>
 </div>
-<div id="overlay"><div class="card"><h1 id="ovTitle">ELIMINATED</h1><p id="ovSub">spectating · next round in a moment</p></div></div>
+<div id="overlay"><div class="card"><h1 id="ovTitle">ELIMINATED</h1><p id="ovSub">spectating · next round in a moment</p><p id="ovStats"></p></div></div>
 <div id="loading">BUILDING RELAY A…</div>
 <div id="start">
   <div class="inner">
     <h1>SITE<span>LINE</span></h1>
     <p>Two lanes. One relay hall. Plant the charge at SITE A or hold the doors until the clock runs out.<br>
     <kbd>WASD</kbd> move · <kbd>Shift</kbd> walk · <kbd>Ctrl</kbd> crouch · <kbd>Space</kbd> jump · <kbd>LMB</kbd> fire · <kbd>R</kbd> reload<br>
-    <kbd>G</kbd> frag · <kbd>E</kbd> plant · <kbd>F</kbd> defuse · <kbd>B</kbd> buy · <kbd>1</kbd>-<kbd>3</kbd> weapon</p>
+    <kbd>G</kbd> throw grenade · <kbd>Q</kbd> cycle frag/smoke/flash · <kbd>E</kbd> plant · <kbd>F</kbd> defuse<br>
+    <kbd>B</kbd> buy · <kbd>1</kbd>-<kbd>5</kbd> weapons · <kbd>6</kbd> armour · <kbd>7</kbd>-<kbd>9</kbd> grenades</p>
     <button id="play">ENTER RELAY</button>
   </div>
 </div>

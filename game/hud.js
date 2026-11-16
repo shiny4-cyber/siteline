@@ -1,20 +1,25 @@
 // HUD: one DOM write per changed field per frame, no layout churn in the hot loop.
-import {WEAPONS,PRICES} from './state.js';
+import {WEAPONS,GRENADES,GRENADE_ORDER,PRICES} from './state.js';
 const $=id=>document.getElementById(id);
 const BUY_ITEMS=[
-  {key:'1',id:'rifle',label:WEAPONS.rifle.name,note:'30 rounds · 27 dmg · accurate',price:WEAPONS.rifle.price},
-  {key:'2',id:'smg',label:WEAPONS.smg.name,note:'25 rounds · fast cycle',price:WEAPONS.smg.price},
-  {key:'3',id:'dmr',label:WEAPONS.dmr.name,note:'10 rounds · 62 dmg · headshot lethal',price:WEAPONS.dmr.price},
-  {key:'4',id:'armour',label:'Plate carrier',note:'100 armour · halves body damage',price:PRICES.armour},
-  {key:'5',id:'grenade',label:'Frag charge',note:'radial damage · flushes cover',price:PRICES.grenade},
-  {key:'6',id:'defuse',label:'Defuse kit',note:'required to defuse a planted charge',price:PRICES.defuse},
+  {key:'1',id:'rifle',label:WEAPONS.rifle.name,note:WEAPONS.rifle.role,price:WEAPONS.rifle.price},
+  {key:'2',id:'smg',label:WEAPONS.smg.name,note:WEAPONS.smg.role,price:WEAPONS.smg.price},
+  {key:'3',id:'dmr',label:WEAPONS.dmr.name,note:WEAPONS.dmr.role,price:WEAPONS.dmr.price},
+  {key:'4',id:'shotgun',label:WEAPONS.shotgun.name,note:WEAPONS.shotgun.role,price:WEAPONS.shotgun.price},
+  {key:'5',id:'lmg',label:WEAPONS.lmg.name,note:WEAPONS.lmg.role,price:WEAPONS.lmg.price},
+  {key:'6',id:'armour',label:'Plate carrier',note:'100 armour · halves body damage',price:PRICES.armour},
+  {key:'7',id:'grenade:frag',label:'Frag charge',note:'radial damage · flushes cover',price:GRENADES.frag.price},
+  {key:'8',id:'grenade:smoke',label:'Smoke canister',note:'12 s cloud · blocks bot sight',price:GRENADES.smoke.price},
+  {key:'9',id:'grenade:flash',label:'Flash bang',note:'blinds bots in line of sight',price:GRENADES.flash.price},
+  {key:'0',id:'defuse',label:'Defuse kit',note:'required to defuse a planted charge',price:PRICES.defuse},
 ];
 export function createHud(s,buy){
   const el={hp:$('hp'),ap:$('ap'),hpBar:$('hpBar').firstElementChild,apBar:$('apBar').firstElementChild,
     mag:$('ammoMag'),reserve:$('ammoReserve'),weapon:$('weaponName'),money:$('money'),buyMoney:$('buyMoney'),
     clock:$('clock'),atk:$('scoreAtk'),def:$('scoreDef'),round:$('roundLabel'),grenades:$('grenades'),
     defuse:$('defuseKit'),feed:$('feed'),hit:$('hitmarker'),overlay:$('overlay'),ovTitle:$('ovTitle'),
-    ovSub:$('ovSub'),plant:$('plantWrap'),plantBar:$('plantBar').firstElementChild,bomb:$('bombStatus'),hint:$('hint')};
+    ovSub:$('ovSub'),ovStats:$('ovStats'),plant:$('plantWrap'),plantBar:$('plantBar').firstElementChild,
+    bomb:$('bombStatus'),hint:$('hint'),site:$('siteLabel')};
   const grid=$('buyGrid');
   for(const it of BUY_ITEMS){
     const card=document.createElement('div');
@@ -26,7 +31,7 @@ export function createHud(s,buy){
   const cache={};
   const put=(node,key,value)=>{if(cache[key]!==value){cache[key]=value;node.textContent=value;}};
   const bar=(node,key,pct)=>{if(cache[key]!==pct){cache[key]=pct;node.style.width=pct+'%';}};
-  let feedFor=0,hitFor=0,lastFeed='';
+  let hitFor=0,feedCount=0;
   return {
     update(s){
       const p=s.player;
@@ -39,9 +44,10 @@ export function createHud(s,buy){
       put(el.weapon,'w',(WEAPONS[p.weapon]||WEAPONS.rifle).name);
       put(el.money,'m',String(Math.round(p.money)));
       put(el.buyMoney,'bm',String(Math.round(p.money)));
-      put(el.grenades,'g',String(p.grenades));
+      put(el.grenades,'g',GRENADE_ORDER.map(k=>`${k[0].toUpperCase()}${p.stock[k]||0}`).join(' '));
       put(el.defuse,'dk',p.hasDefuse?'KIT':'—');
-      const t=Math.max(0,Math.ceil(s.phase==='buy'?s.phaseTimer:s.phase==='live'?s.phaseTimer:0));
+      put(el.site,'site',`OBJECTIVE ${s.site.short} · ${s.site.name}`);
+      const t=Math.max(0,Math.ceil(s.phaseTimer));
       put(el.clock,'clock',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`);
       put(el.atk,'atk',String(s.score.attack));
       put(el.def,'def',String(s.score.defend));
@@ -55,20 +61,21 @@ export function createHud(s,buy){
       if(planting)bar(el.plantBar,'pb',(s.plantProgress/3.2*100).toFixed(0));
       const armed=!!s.bomb&&s.bomb.state==='armed';
       el.bomb.classList.toggle('on',armed);
-      if(armed&&s.time>feedFor)feedFor=s.time;
-      el.hint.classList.toggle('on',s.phase==='live'&&!s.bomb&&Math.hypot(p.x,p.z+10)<5);
+      el.hint.classList.toggle('on',s.phase==='live'&&!s.bomb&&Math.hypot(p.x-s.site.x,p.z-s.site.z)<6);
       const dead=!p.alive;
       const ended=s.phase==='roundEnd';
       el.overlay.classList.toggle('on',dead||ended);
       if(ended&&s.winner){
         put(el.ovTitle,'ovt',s.winner==='attack'?'RELAY SECURED':'SITE HELD');
-        put(el.ovSub,'ovs',s.winReason);
+        put(el.ovSub,'ovs',`${s.winReason} · round ${s.summary?s.summary.round:s.round}`);
+        if(s.summary)put(el.ovStats,'ovst',
+          `SCORE ${s.score.attack}–${s.score.defend}   INCOME +$${s.summary.income}   K/D ${s.summary.kills}/${s.summary.deaths}   NEXT WIN $${s.summary.nextIncome}   NEXT ROUND ${Math.ceil(s.phaseTimer)}s`);
       }else if(dead){
         put(el.ovTitle,'ovt','ELIMINATED');
         put(el.ovSub,'ovs','spectating · your squad still has the round');
+        put(el.ovStats,'ovst','');
       }
-      const msg=s.lastEvent;
-      if(msg&&msg!==lastFeed){lastFeed=msg;this.feed(msg);}
+      if(s.killFeed.length!==feedCount){feedCount=s.killFeed.length;if(s.killFeed[0])this.feed(s.killFeed[0].text);}
       if(s.stats.hits>hitFor){hitFor=s.stats.hits;el.hit.classList.add('on');setTimeout(()=>el.hit.classList.remove('on'),90);}
     },
     feed(text){

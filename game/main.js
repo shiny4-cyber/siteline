@@ -1,9 +1,10 @@
 // Main loop and renderer: 120 Hz fixed simulation, rendering decoupled, input and debug hooks.
 import * as THREE from 'three';
-import {createState,spawnRound,startRound,WEAPONS,STEP,BUY_TIME} from './state.js';
+import {createState,spawnRound,startRound,WEAPONS,GRENADE_ORDER,STEP,BUY_TIME} from './state.js';
 import {tick,buy,advance as simAdvance,throwGrenade,reload,fire} from './sim.js';
 import {buildWorld,buildViewmodel,PALETTE} from './world.js';
 import {createHud} from './hud.js';
+import {sfx,unlockAudio} from './audio.js';
 import {eyeHeight} from './movement.js';
 const params=new URLSearchParams(location.search);
 const canvas=document.getElementById('view');
@@ -17,9 +18,9 @@ const camera=new THREE.PerspectiveCamera(74,1,0.05,260);
 scene.add(camera);
 buildWorld(scene);
 const view=buildViewmodel(camera);
-const state=createState();
+const state=createState(Number(params.get('seed')??(Math.random()*1e6|0)));
 state.debug.nobots=params.get('nobots')==='1';
-spawnRound(state,{nobots:state.debug.nobots});
+spawnRound(state,{nobots:state.debug.nobots,seed:state.seed});
 if(params.get('fast')==='1')state.phaseTimer=1.2;
 const hud=createHud(state,item=>{if(buy(state,item))hud.feed(item.toUpperCase()+' ACQUIRED');});
 // Character meshes are pooled once; the loop only moves them.
@@ -69,6 +70,7 @@ function begin(){
   if(started)return;
   started=true;startPanel.style.display='none';
   document.getElementById('loading').style.display='none';
+  unlockAudio();
   if(canvas.requestPointerLock)canvas.requestPointerLock();
 }
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===canvas;});
@@ -79,16 +81,35 @@ addEventListener('keydown',e=>{
     if(on)document.exitPointerLock&&document.exitPointerLock();
     e.preventDefault();return;
   }
-  if(e.code==='KeyR')reload(state.player);
-  if(e.code==='KeyG')throwGrenade(state,state.player);
+  if(e.code==='KeyR'){if(reload(state.player))sfx.reload();}
+  if(e.code==='KeyG')throwSelected();
+  if(e.code==='KeyQ')cycleGrenade();
   if(e.code==='KeyE')input.plant=true;
   if(e.code==='KeyF')input.defuse=true;
   if(e.code.startsWith('Digit')){
-    const map={Digit1:'rifle',Digit2:'smg',Digit3:'dmr',Digit4:'armour',Digit5:'grenade',Digit6:'defuse'};
-    const item=map[e.code];
-    if(item&&buy(state,item))hud.feed(item.toUpperCase()+' ACQUIRED');
+    const n=e.code.slice(5);
+    if(state.phase==='buy'){
+      const map={'1':'rifle','2':'smg','3':'dmr','4':'shotgun','5':'lmg','6':'armour',
+        '7':'grenade:frag','8':'grenade:smoke','9':'grenade:flash','0':'defuse'};
+      const item=map[n];
+      if(item&&buy(state,item))hud.feed(item.replace('grenade:','').toUpperCase()+' ACQUIRED');
+    }else{
+      const pick={'7':'frag','8':'smoke','9':'flash'}[n];
+      if(pick){state.player.grenadeType=pick;hud.feed('GRENADE · '+pick.toUpperCase());}
+    }
   }
 });
+function throwSelected(){
+  const p=state.player;
+  if(p.stock[p.grenadeType]>0&&throwGrenade(state,p,p.grenadeType)){sfx.grenade();hud.feed((p.grenadeType||'frag').toUpperCase()+' OUT');return;}
+  const next=GRENADE_ORDER.find(k=>p.stock[k]>0);
+  if(next){p.grenadeType=next;if(throwGrenade(state,p,next)){sfx.grenade();hud.feed(next.toUpperCase()+' OUT');}}
+}
+function cycleGrenade(){
+  const p=state.player,i=GRENADE_ORDER.indexOf(p.grenadeType);
+  p.grenadeType=GRENADE_ORDER[(i+1)%GRENADE_ORDER.length];
+  hud.feed('GRENADE · '+p.grenadeType.toUpperCase());
+}
 addEventListener('keyup',e=>{
   keys[e.code]=false;
   if(e.code==='KeyE'){input.plant=false;state.plantProgress=0;}
@@ -114,7 +135,7 @@ addEventListener('wheel',e=>{
 let shotResult=null;
 function shootOnce(){
   const r=fire(state,state.player);
-  if(r){shotResult=r;showTracer(r);}
+  if(r){shotResult=r;showTracer(r);sfx.shot(state.player.weapon);}
 }
 function showTracer(r){
   if(!r)return;
@@ -124,7 +145,7 @@ function showTracer(r){
   tracerGeo.attributes.position.needsUpdate=true;
   tracer.visible=true;tracerT=0.055;
 }
-let last=performance.now(),acc=0;
+let last=performance.now(),acc=0,stepTimer=0,lastKills=0,lastRoundOver=false;
 function frame(now){
   requestAnimationFrame(frame);
   const dt=Math.min(0.25,(now-last)/1000);last=now;
@@ -136,13 +157,20 @@ function frame(now){
   input.jump=!!keys.Space;
   if(started&&state.phase==='live'&&WEAPONS[p.weapon].auto&&input.shoot){
     const r=fire(state,p);
-    if(r)showTracer(r);
+    if(r){showTracer(r);sfx.shot(p.weapon);}
   }
   acc+=dt;
   let steps=0;
   if(!state.debug.paused)while(acc>=STEP&&steps<8){tick(state,STEP);acc-=STEP;steps++;}
   if(acc>STEP*8)acc=0;
   if(input.jump)input.jump=false;
+  if(p.alive&&state.phase==='live'&&Math.hypot(p.vx,p.vz)>1.2&&p.onGround){
+    stepTimer-=dt;
+    if(stepTimer<=0){sfx.footstep();stepTimer=p.crouch?0.62:0.4;}
+  }
+  if(p.kills>lastKills){lastKills=p.kills;sfx.kill();}
+  if(state.phase==='roundEnd'&&!lastRoundOver){lastRoundOver=true;sfx.round(state.winner==='attack');}
+  if(state.phase!=='roundEnd')lastRoundOver=false;
   render();
   hud.update(state);
 }
@@ -209,8 +237,11 @@ globalThis.__probe=(ndcX=0,ndcY=0)=>{
 };
 globalThis.__debug=()=>({
   phase:state.phase,round:state.round,timer:+state.phaseTimer.toFixed(2),score:{...state.score},
+  site:{id:state.site.id,name:state.site.name,x:state.site.x,z:state.site.z},
   money:state.player.money,hp:state.player.hp,alive:state.player.alive,mag:state.player.mag,
   reserve:state.player.reserve,weapon:state.player.weapon,armour:state.player.armour,
+  stock:{...state.player.stock},grenadeType:state.player.grenadeType,
+  smokes:state.smokes.length,summary:state.summary?{...state.summary}:null,
   pos:[+state.player.x.toFixed(2),+state.player.z.toFixed(2)],yaw:+state.player.yaw.toFixed(3),
   bomb:state.bomb?{state:state.bomb.state,timer:+state.bomb.timer.toFixed(2),x:+state.bomb.x.toFixed(2),z:+state.bomb.z.toFixed(2)}:null,
   bots:state.actors.map(b=>({id:b.id,team:b.team,alive:b.alive,hp:Math.round(b.hp),state:b.state,x:+b.x.toFixed(2),z:+b.z.toFixed(2)})),
