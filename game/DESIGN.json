@@ -17,7 +17,7 @@
     "E": "hold to plant on the active site",
     "F": "hold to defuse with a kit",
     "B/Esc": "buy menu",
-    "1-5": "buy weapon (buy phase) · 6 armour · 7-9 grenades · 0 defuse kit",
+    "1-5": "buy weapon (buy phase) \u00b7 6 armour \u00b7 7-9 grenades \u00b7 0 defuse kit",
     "7-9 in round": "select frag / smoke / flash"
   },
   "systems": {
@@ -30,7 +30,9 @@
     "objective": "Charge plants in 3.2 s on the active site, 40 s fuse, 5 s defuse. Rounds end by detonation, defuse, elimination or timeout; a round summary shows score, income and next-round reward.",
     "bots": "Nav-graph A* with visibility-checked edges, throttled perception, reaction delay, noise investigation, cover-seeking reloads, stuck re-pathing, smoke that cuts sight and flash blindness.",
     "map": "Relay station: west arcade with a sandstone colonnade, east freight lane with teal steel, splitter block, two-door hall, transformer yard, crates and cargo cover, painted site decals, signage per site.",
-    "presentation": "Dusk palette (sand, teal, ember), procedural canvas textures, gradient sky, stronger key light with cheap shadows, first-person viewmodel with muzzle flash and recoil, procedural WebAudio cues for shots, hits, steps, planting and round end."
+    "presentation": "Dusk palette (sand, teal, ember), procedural canvas textures, gradient sky, stronger key light with cheap shadows, first-person viewmodel with muzzle flash and recoil, procedural WebAudio cues for shots, hits, steps, planting and round end.",
+    "briefing": "First-run overlay states the objective, round flow, controls and buy phase, shown once per match and dismissed by click or Enter; the HUD keeps a persistent objective line.",
+    "roundSummary": "Round-end card names the winning side and the reason, with score, income and K/D; in site rush it also announces the match winner."
   },
   "files": {
     "game/main.js": "renderer wiring, input, 120 Hz accumulator, debug hooks",
@@ -44,7 +46,9 @@
     "game/hud.js": "DOM HUD, buy menu wiring, kill feed, round summary",
     "game/audio.js": "procedural WebAudio cues, no assets",
     "game/state.js": "single state object, constants, economy, round lifecycle",
-    "game/index.html": "import map for three 0.187.0, HUD markup and styling"
+    "game/index.html": "import map for three 0.187.0, HUD markup and styling",
+    "game/modes.js": "match mode rules: round count, buy phase, economy, timers",
+    "game/briefing.js": "first-run briefing overlay controller"
   },
   "debugHooks": {
     "purpose": "test scaffolding used by tests/browser.py and the screenshot capture; not gameplay cheats",
@@ -55,5 +59,9 @@
     "__pause(flag)": "freeze simulation time so a frame can be captured",
     "?seed=N": "pin the objective layout for tests and captures",
     "?nobots=1": "spawn no bots for the objective test and buy-menu capture"
+  },
+  "modesNamed": {
+    "standard": "Full match, economy and buy phase, both sites.",
+    "rush": "Site rush: three rounds, no purchases, fixed rifle + armour + one frag; first to two wins takes the match."
   }
 }

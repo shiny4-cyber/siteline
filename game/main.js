@@ -4,6 +4,8 @@ import {createState,spawnRound,startRound,WEAPONS,GRENADE_ORDER,STEP,BUY_TIME} f
 import {tick,buy,advance as simAdvance,throwGrenade,reload,fire} from './sim.js';
 import {buildWorld,buildViewmodel,PALETTE} from './world.js';
 import {createHud} from './hud.js';
+import {createBriefing,openBriefing,dismiss as dismissBriefing,isBriefingOpen} from './briefing.js';
+import {modeOf} from './modes.js';
 import {sfx,unlockAudio} from './audio.js';
 import {eyeHeight} from './movement.js';
 const params=new URLSearchParams(location.search);
@@ -18,11 +20,24 @@ const camera=new THREE.PerspectiveCamera(74,1,0.05,260);
 scene.add(camera);
 buildWorld(scene);
 const view=buildViewmodel(camera);
-const state=createState(Number(params.get('seed')??(Math.random()*1e6|0)));
+const state=createState(Number(params.get('seed')??(Math.random()*1e6|0)),params.get('mode')??'standard');
 state.debug.nobots=params.get('nobots')==='1';
 spawnRound(state,{nobots:state.debug.nobots,seed:state.seed});
 if(params.get('fast')==='1')state.phaseTimer=1.2;
-const hud=createHud(state,item=>{if(buy(state,item))hud.feed(item.toUpperCase()+' ACQUIRED');});
+const hud=createHud(state,item=>{if(buy(state,item))hud.feed(item.replace('grenade:','').toUpperCase()+' ACQUIRED');});
+createBriefing(()=>{state.debug.paused=false;});
+let selectedMode=state.mode.id;
+for(const btn of document.querySelectorAll('.mode')){
+  btn.addEventListener('click',()=>{
+    if(started)return;
+    selectedMode=btn.dataset.mode;
+    for(const other of document.querySelectorAll('.mode'))other.classList.toggle('sel',other===btn);
+    state.mode=modeOf(selectedMode);
+    state.seed=Math.random()*1e6|0;
+    spawnRound(state,{nobots:state.debug.nobots,seed:state.seed});
+    hud.update(state);
+  });
+}
 // Character meshes are pooled once; the loop only moves them.
 const BOT_GEO={body:new THREE.BoxGeometry(0.62,0.86,0.4),head:new THREE.BoxGeometry(0.32,0.3,0.32),legs:new THREE.BoxGeometry(0.56,0.78,0.36)};
 const BOT_MAT={attack:new THREE.MeshStandardMaterial({color:'#d8894a',roughness:0.7}),defend:new THREE.MeshStandardMaterial({color:'#2f7f86',roughness:0.7}),head:new THREE.MeshStandardMaterial({color:'#e8cdac',roughness:0.8}),legs:new THREE.MeshStandardMaterial({color:'#39434a',roughness:0.85})};
@@ -71,11 +86,23 @@ function begin(){
   started=true;startPanel.style.display='none';
   document.getElementById('loading').style.display='none';
   unlockAudio();
+  if(!state.briefingShown){
+    state.briefingShown=true;state.debug.paused=true;
+    openBriefing(state.site,state.mode);
+  }
   if(canvas.requestPointerLock)canvas.requestPointerLock();
+}
+function newMatch(){
+  state.round=1;state.score.attack=0;state.score.defend=0;
+  state.matchWinner=null;state.briefingShown=true;state.debug.paused=false;
+  spawnRound(state,{nobots:state.debug.nobots,seed:Math.random()*1e6|0});
+  hud.update(state);
 }
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===canvas;});
 addEventListener('keydown',e=>{
   keys[e.code]=true;
+  if(isBriefingOpen()&&(e.code==='Enter'||e.code==='Space'||e.code==='Escape')){dismissBriefing();e.preventDefault();return;}
+  if(e.code==='Enter'&&state.phase==='matchEnd'){newMatch();return;}
   if(e.code==='KeyB'||e.code==='Escape'){
     const on=document.getElementById('buy').classList.toggle('on');
     if(on)document.exitPointerLock&&document.exitPointerLock();
@@ -224,6 +251,8 @@ globalThis.__fire=()=>{const r=fire(state,state.player);if(r)showTracer(r);rende
 globalThis.__reload=()=>reload(state.player);
 globalThis.__start=()=>{begin();return true;};
 globalThis.__pause=v=>{state.debug.paused=v!==false;return state.debug.paused;};
+globalThis.__dismissBriefing=()=>{const closed=dismissBriefing();state.debug.paused=false;return closed;};
+globalThis.__setMode=id=>{state.mode=modeOf(id);spawnRound(state,{nobots:state.debug.nobots,seed:state.seed});hud.update(state);return state.mode.id;};
 globalThis.__state=state;
 globalThis.__camera=camera;
 globalThis.__three=THREE;
@@ -238,6 +267,8 @@ globalThis.__probe=(ndcX=0,ndcY=0)=>{
 globalThis.__debug=()=>({
   phase:state.phase,round:state.round,timer:+state.phaseTimer.toFixed(2),score:{...state.score},
   site:{id:state.site.id,name:state.site.name,x:state.site.x,z:state.site.z},
+  mode:{id:state.mode.id,name:state.mode.name,rounds:state.mode.rounds,buy:state.mode.buy,economy:state.mode.economy},
+  briefingShown:state.briefingShown,briefingOpen:isBriefingOpen(),matchWinner:state.matchWinner,
   money:state.player.money,hp:state.player.hp,alive:state.player.alive,mag:state.player.mag,
   reserve:state.player.reserve,weapon:state.player.weapon,armour:state.player.armour,
   stock:{...state.player.stock},grenadeType:state.player.grenadeType,

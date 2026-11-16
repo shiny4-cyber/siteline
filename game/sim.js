@@ -5,7 +5,7 @@ import {stepBots} from './bots.js';
 import {fire,reload,tickWeapon,throwGrenade,explode,GRENADES} from './combat.js';
 export function buy(s,item){
   const p=s.player;
-  if(s.phase!=='buy')return false;
+  if(s.phase!=='buy'||!s.mode.buy)return false;
   if(item==='armour'){if(p.money<PRICES.armour||p.armour>=100)return false;p.money-=PRICES.armour;p.armour=100;return true;}
   if(item==='defuse'){if(p.money<PRICES.defuse||p.hasDefuse)return false;p.money-=PRICES.defuse;p.hasDefuse=true;return true;}
   if(item&&item.startsWith('grenade:')){

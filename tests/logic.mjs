@@ -99,5 +99,17 @@ await test('Economy: round income escalates with the round and loss streak', asy
   assert.ok(s.summary.income>=win3);
   assert.ok(s.economy.lossCap>s.economy.lossBase);
 });
+await test('Modes: site rush is three no-economy rounds and ends the match', async()=>{
+  const {createState,spawnRound,roundOver} = await import('../game/state.js');
+  const {buy} = await import('../game/sim.js');
+  const s=createState(0,'rush');spawnRound(s,{nobots:true,seed:0});
+  assert.equal(s.mode.id,'rush');assert.equal(s.phase,'live');assert.equal(s.mode.rounds,3);
+  assert.equal(s.player.money,0);assert.equal(buy(s,'rifle'),false,'rush must not sell weapons');
+  for(let i=0;i<3;i++){s.phase='live';roundOver(s,'attack','defenders eliminated');if(s.phase==='roundEnd'){s.phase='live';s.round++;}}
+  assert.equal(s.phase,'matchEnd','three rounds must end the match');
+  assert.equal(s.matchWinner,'attack');assert.equal(s.score.attack,3);
+  const std=createState(0,'standard');spawnRound(std,{nobots:true});
+  assert.equal(std.mode.id,'standard');assert.equal(std.mode.rounds,0);
+});
 console.table(rows);
 if(rows.some(r=>r.result==='FAIL')) process.exitCode=1;

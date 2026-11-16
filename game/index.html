@@ -59,9 +59,9 @@
   #plantBar i{display:block;height:100%;width:0;background:var(--orange)}
   #bombStatus{position:absolute;top:96px;left:50%;transform:translateX(-50%);font-size:13px;color:#ffb066;display:none}
   #bombStatus.on{display:block}
-  #overlay{position:fixed;inset:0;display:none;place-items:center;background:radial-gradient(ellipse at center,rgba(11,20,23,.55),rgba(6,10,12,.92))}
+  #overlay{position:fixed;inset:0;display:none;place-items:center;background:radial-gradient(ellipse at center,rgba(14,26,30,.7),rgba(6,10,12,.9))}
   #overlay.on{display:grid}
-  #overlay .card{padding:26px 40px;text-align:center;border:1px solid rgba(224,138,74,.5);background:rgba(9,17,20,.9)}
+  #overlay .card{padding:26px 40px;text-align:center;border:1px solid rgba(224,138,74,.7);background:linear-gradient(180deg,#1e4150,#12242c);min-width:520px}
   #overlay h1{margin:0;font-size:34px;letter-spacing:.16em}
   #overlay p{margin:10px 0 0;color:#c3b393;font-size:13px}
   #buy{position:fixed;inset:0;display:none;place-items:center;background:rgba(10,20,24,.52);pointer-events:auto}
@@ -90,6 +90,24 @@
   #start kbd{border:1px solid #52605c;padding:1px 5px;font-size:11px;color:#dfd0b0}
   #play{margin-top:18px;padding:12px 40px;font:inherit;font-size:14px;letter-spacing:.2em;color:#0b1417;background:var(--orange);border:0;cursor:pointer}
   #play:hover{background:#f0a45e}
+
+  #briefing{position:fixed;inset:0;display:none;place-items:center;background:rgba(6,12,14,.72);z-index:6}
+  #briefing.on{display:grid}
+  #briefing .card{width:720px;max-width:92vw;padding:26px 30px;border:1px solid rgba(224,138,74,.7);
+    background:linear-gradient(180deg,#1e4150,#12242c);box-shadow:0 24px 70px rgba(0,0,0,.6)}
+  #briefing .tag{font-size:11px;letter-spacing:.32em;color:var(--orange)}
+  #briefing h2{margin:6px 0 2px;font-size:30px;letter-spacing:.18em}
+  #briefMode{color:#9fb7b2;font-size:12px;letter-spacing:.12em;margin-bottom:14px}
+  #briefing p{margin:8px 0;color:#e6d8bd;font-size:13px;line-height:1.7}
+  #briefing ul{margin:10px 0 16px;padding-left:18px;color:#c9bda3;font-size:12px;line-height:1.9}
+  #briefing button{margin-top:6px;padding:10px 30px;font:inherit;font-size:12px;letter-spacing:.2em;
+    background:var(--orange);color:#0b1417;border:0;cursor:pointer}
+  #briefing .tiny{margin-top:10px;color:#7f8d88;font-size:11px}
+  .modes{display:flex;gap:10px;justify-content:center;margin-top:14px}
+  .mode{padding:8px 14px;font:inherit;font-size:11px;letter-spacing:.14em;background:transparent;
+    color:#c9bda3;border:1px solid #4a5b58;cursor:pointer}
+  .mode.sel{border-color:var(--orange);color:var(--cream);background:rgba(224,138,74,.16)}
+  .mode span{display:block;margin-top:3px;font-size:10px;letter-spacing:.04em;color:#8f9d97}
   #loading{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);color:#c9b08a;font-size:12px;letter-spacing:.2em}
   #err{position:fixed;left:12px;bottom:12px;color:#ff9c7a;font-size:11px;max-width:60vw;white-space:pre-wrap}
 </style>
@@ -133,6 +151,23 @@
     <footer>1–0 buy · B or ESC close · purchases only during the buy phase</footer>
   </div>
 </div>
+
+<div id="briefing" role="dialog" aria-label="Mission briefing">
+  <div class="card">
+    <div class="tag">MISSION BRIEFING</div>
+    <h2>SITELINE</h2>
+    <div id="briefMode">STANDARD</div>
+    <p id="briefObjective"></p>
+    <p id="briefFlow"></p>
+    <ul>
+      <li>WASD move · Ctrl crouch · Space jump · mouse look · LMB fire · R reload</li>
+      <li>E plant on the site · F defuse with a kit · G throw grenade · Q cycle frag/smoke/flash</li>
+      <li>B buy menu during the buy phase · 1-5 weapons · 6 armour · 7-9 grenades · 0 defuse kit</li>
+    </ul>
+    <button data-briefing-close>DEPLOY</button>
+    <div class="tiny">Click or press Enter to dismiss · this briefing shows once per match</div>
+  </div>
+</div>
 <div id="overlay"><div class="card"><h1 id="ovTitle">ELIMINATED</h1><p id="ovSub">spectating · next round in a moment</p><p id="ovStats"></p></div></div>
 <div id="loading">BUILDING RELAY A…</div>
 <div id="start">
@@ -142,6 +177,10 @@
     <kbd>WASD</kbd> move · <kbd>Shift</kbd> walk · <kbd>Ctrl</kbd> crouch · <kbd>Space</kbd> jump · <kbd>LMB</kbd> fire · <kbd>R</kbd> reload<br>
     <kbd>G</kbd> throw grenade · <kbd>Q</kbd> cycle frag/smoke/flash · <kbd>E</kbd> plant · <kbd>F</kbd> defuse<br>
     <kbd>B</kbd> buy · <kbd>1</kbd>-<kbd>5</kbd> weapons · <kbd>6</kbd> armour · <kbd>7</kbd>-<kbd>9</kbd> grenades</p>
+    <div class="modes">
+      <button class="mode sel" data-mode="standard">STANDARD<span>full match · economy</span></button>
+      <button class="mode" data-mode="rush">SITE RUSH<span>3 rounds · no economy</span></button>
+    </div>
     <button id="play">ENTER RELAY</button>
   </div>
 </div>

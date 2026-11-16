@@ -46,7 +46,9 @@ export function createHud(s,buy){
       put(el.buyMoney,'bm',String(Math.round(p.money)));
       put(el.grenades,'g',GRENADE_ORDER.map(k=>`${k[0].toUpperCase()}${p.stock[k]||0}`).join(' '));
       put(el.defuse,'dk',p.hasDefuse?'KIT':'—');
-      put(el.site,'site',`OBJECTIVE ${s.site.short} · ${s.site.name}`);
+      put(el.site,'site',s.phase==='buy'
+        ?`BUY PHASE · OBJECTIVE ${s.site.short} — ${s.site.name}`
+        :`OBJECTIVE ${s.site.short} — PLANT AT ${s.site.name} · HOLD E · ${s.mode.name}`);
       const t=Math.max(0,Math.ceil(s.phaseTimer));
       put(el.clock,'clock',`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`);
       put(el.atk,'atk',String(s.score.attack));
@@ -63,13 +65,16 @@ export function createHud(s,buy){
       el.bomb.classList.toggle('on',armed);
       el.hint.classList.toggle('on',s.phase==='live'&&!s.bomb&&Math.hypot(p.x-s.site.x,p.z-s.site.z)<6);
       const dead=!p.alive;
-      const ended=s.phase==='roundEnd';
+      const ended=s.phase==='roundEnd'||s.phase==='matchEnd';
       el.overlay.classList.toggle('on',dead||ended);
       if(ended&&s.winner){
-        put(el.ovTitle,'ovt',s.winner==='attack'?'RELAY SECURED':'SITE HELD');
-        put(el.ovSub,'ovs',`${s.winReason} · round ${s.summary?s.summary.round:s.round}`);
+        const side=s.winner==='attack'?'SAPERS':'CUSTODIANS';
+        put(el.ovTitle,'ovt',s.phase==='matchEnd'
+          ?(s.matchWinner==='draw'?'MATCH DRAWN':`MATCH WON — ${s.matchWinner==='attack'?'SAPERS':'CUSTODIANS'}`)
+          :`${side} WIN THE ROUND`);
+        put(el.ovSub,'ovs',`${s.winReason} · round ${s.round} of ${s.mode.rounds||'∞'}`);
         if(s.summary)put(el.ovStats,'ovst',
-          `SCORE ${s.score.attack}–${s.score.defend}   INCOME +$${s.summary.income}   K/D ${s.summary.kills}/${s.summary.deaths}   NEXT WIN $${s.summary.nextIncome}   NEXT ROUND ${Math.ceil(s.phaseTimer)}s`);
+          `SCORE ${s.score.attack}–${s.score.defend}   INCOME ${s.mode.economy?'+$'+s.summary.income:'NO ECONOMY'}   K/D ${s.summary.kills}/${s.summary.deaths}   ${s.phase==='matchEnd'?'ENTER FOR A NEW MATCH':'NEXT ROUND IN '+Math.ceil(s.phaseTimer)+'s'}`);
       }else if(dead){
         put(el.ovTitle,'ovt','ELIMINATED');
         put(el.ovSub,'ovs','spectating · your squad still has the round');

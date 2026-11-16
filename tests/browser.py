@@ -89,14 +89,18 @@ print(json.dumps({'size':[w,h],'mean':mean,'dark_fraction':round(dark,3),'palett
 """
 
 
-def capture(page, name):
+def capture(page, name, kind="scene"):
     path = SHOTS / name
     page.screenshot(path=str(path), type="jpeg", quality=88)
     report = pixel_report(path)
     ok = report["bytes"] <= 262144 and max(report["size"]) <= 1280 and min(report["size"]) >= 480
     check(f"capture {name}: caps", ok, json.dumps({k: report[k] for k in ('size', 'bytes')}))
-    check(f"capture {name}: not black", report["dark_fraction"] < 0.55 and sum(report["mean"]) > 90,
-          f"mean={report['mean']} dark={report['dark_fraction']}")
+    if kind == "scene":
+        check(f"capture {name}: readable scene", report["dark_fraction"] < 0.55 and sum(report["mean"]) > 90,
+              f"mean={report['mean']} dark={report['dark_fraction']}")
+    else:
+        check(f"capture {name}: UI overlay filled", report["palette_bins"] >= 4 and report["bytes"] > 15000,
+              f"bins={report['palette_bins']} bytes={report['bytes']}")
     return report
 
 
@@ -123,6 +127,17 @@ def main():
             page.click("#play")
             page.wait_for_timeout(300)
             check("click-to-play starts the match", page.evaluate("() => window.__debug().started"))
+            brief = page.evaluate("() => ({open: window.__debug().briefingOpen, shown: window.__debug().briefingShown, text: document.getElementById('briefObjective').textContent, flow: document.getElementById('briefFlow').textContent, mode: window.__debug().mode.name})")
+            check("first-run briefing opens with objective, flow and mode",
+                  brief["open"] and brief["shown"] and "Plant the charge" in brief["text"] and "Buy phase" in brief["flow"],
+                  json.dumps(brief)[:220])
+            shots.append(capture(page, "2-briefing.jpg", kind="ui"))
+            page.evaluate("() => window.__dismissBriefing()")
+            page.wait_for_timeout(150)
+            check("briefing dismisses and stays dismissed for the match",
+                  not page.evaluate("() => window.__debug().briefingOpen") and
+                  page.evaluate("() => window.__debug().briefingShown") and
+                  not page.evaluate("() => { window.__start(); return window.__debug().briefingOpen; }"))
 
             # ---- buy phase economics
             before = page.evaluate("() => window.__debug()")
@@ -146,31 +161,25 @@ def main():
             check("grenade stock is exposed to the HUD",
                   all(k in live["stock"] for k in ("frag", "smoke", "flash")), json.dumps(live["stock"]))
 
-            # ---- hero capture: west lane, site door and defenders in frame
-            page.evaluate("() => { window.__pause(true); window.__tp(-9, 9, 0, -0.02); window.__advance(0.35); }")
-            page.wait_for_timeout(250)
-            hero_enemies = visible_enemy(page)
-            check("approach-lane capture has enemies on screen", hero_enemies >= 1, f"enemies={hero_enemies}")
-            shots.append(capture(page, "1-approach-lane.jpg"))
-
-            # ---- firefight capture: close quarters, player alive, muzzle flash live
+            # ---- cover capture: live firefight, HUD, objective line, enemy in frame
             page.evaluate("""() => {
               window.__pause(false);
               const s = window.__state;
               const d = s.actors.find(b => b.team === 'defend' && b.alive);
               d.x = -3.2; d.z = -8.4; d.hp = 100; d.alive = true;
-              window.__tp(-3.2, -4.2, 0, 0.02);
-              window.__advance(0.2);
+              window.__tp(-3.2, -2.6, 0, 0.0);
+              window.__advance(0.4);
               window.__pause(true);
               window.__fire();
             }""")
             page.wait_for_timeout(200)
-            ff = page.evaluate("() => window.__debug()")
-            ff_enemies = visible_enemy(page)
-            check("firefight: player alive at shutter", ff["alive"] and ff["hp"] > 0, f"hp={ff['hp']}")
-            check("firefight: enemy in frame", ff_enemies >= 1, f"enemies={ff_enemies}")
-            check("firefight: firing consumed ammo", ff["mag"] < 30, f"mag={ff['mag']}")
-            shots.append(capture(page, "2-live-firefight.jpg"))
+            cover = page.evaluate("() => window.__debug()")
+            cover_enemies = visible_enemy(page)
+            objective_text = page.evaluate("() => document.getElementById('siteLabel').textContent")
+            check("cover: player alive at shutter", cover["alive"] and cover["hp"] > 0, f"hp={cover['hp']}")
+            check("cover: enemy in frame", cover_enemies >= 1, f"enemies={cover_enemies}")
+            check("cover: objective line visible in HUD", "OBJECTIVE" in objective_text, objective_text)
+            shots.append(capture(page, "1-cover-firefight.jpg"))
 
             # ---- ammo / reload / spread assertions in the live match
             ammo = page.evaluate("""() => {
@@ -210,12 +219,17 @@ def main():
             planted = page2.evaluate("() => window.__debug().bomb")
             check("charge plants on site with a live fuse", bool(planted) and planted["state"] == "armed"
                   and 0 < planted["timer"] <= 40, json.dumps(planted))
-            page2.evaluate("() => { window.__state.input.plant = false; window.__advance(41); }")
+            page2.evaluate("() => { window.__state.input.plant = false; window.__advance(41); window.__pause(true); }")
             ended = page2.evaluate("() => window.__debug()")
             check("detonation wins the round for the attackers",
                   ended["phase"] == "roundEnd" and ended["score"]["attack"] == 1,
                   f"{ended['phase']} {ended['score']}")
-            page2.evaluate("() => window.__advance(5.4)")
+            summary_text = page2.evaluate("() => [document.getElementById('ovTitle').textContent, document.getElementById('ovSub').textContent, document.getElementById('ovStats').textContent]")
+            check("round summary card names the winner and the reason",
+                  "WIN THE ROUND" in summary_text[0] and "detonated" in summary_text[1],
+                  " | ".join(summary_text)[:200])
+            shots.append(capture(page2, "3-round-summary.jpg", kind="ui"))
+            page2.evaluate("() => { window.__pause(false); window.__advance(5.4); }")
             restarted = page2.evaluate("() => window.__debug()")
             check("next round starts and score persists",
                   restarted["round"] == 2 and restarted["score"]["attack"] == 1,
@@ -236,8 +250,12 @@ def main():
             page3.wait_for_timeout(400)
             open_now = page3.evaluate("() => document.getElementById('buy').classList.contains('on')")
             check("buy menu opens on B", open_now)
-            page3.evaluate("() => { document.getElementById('buyMoney').textContent = '800'; }")
-            shots.append(capture(page3, "3-buy-menu.jpg"))
+            rush = page3.evaluate("() => { const id = window.__setMode('rush'); const d = window.__debug(); return {id, phase: d.phase, rounds: d.mode.rounds, buy: d.mode.buy, economy: d.mode.economy}; }")
+            check("site rush mode is wired into the simulation",
+                  rush["id"] == "rush" and rush["phase"] == "live" and rush["rounds"] == 3 and not rush["buy"],
+                  json.dumps(rush))
+            check("buy menu renders ten requisition items",
+                  page3.evaluate("() => document.getElementById('buyGrid').children.length") == 10)
             page3.close()
 
             check("zero page errors", not errors, "; ".join(errors[:3]))

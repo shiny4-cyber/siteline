@@ -11,6 +11,26 @@
    "detail": ""
   },
   {
+   "test": "first-run briefing opens with objective, flow and mode",
+   "result": "PASS",
+   "detail": "{\"open\": true, \"shown\": true, \"text\": \"Plant the charge at RELAY A (objective A) or hold it as Custodian.\", \"flow\": \"Buy phase \\u2192 live round \\u2192 win by detonation, defuse, elimination or timeout \\u2192 next round "
+  },
+  {
+   "test": "capture 2-briefing.jpg: caps",
+   "result": "PASS",
+   "detail": "{\"size\": [1280, 800], \"bytes\": 83373}"
+  },
+  {
+   "test": "capture 2-briefing.jpg: UI overlay filled",
+   "result": "PASS",
+   "detail": "bins=26 bytes=83373"
+  },
+  {
+   "test": "briefing dismisses and stays dismissed for the match",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
    "test": "buy menu purchase charges money and grants armour",
    "result": "PASS",
    "detail": "money 800->150, armour=100"
@@ -18,7 +38,7 @@
   {
    "test": "buy phase ends and the round goes live",
    "result": "PASS",
-   "detail": "phase=live timer=113.97"
+   "detail": "phase=live timer=114.05"
   },
   {
    "test": "seven bots spawned, both teams present",
@@ -28,7 +48,7 @@
   {
    "test": "HUD names the active objective site",
    "result": "PASS",
-   "detail": "OBJECTIVE A \u00b7 RELAY A"
+   "detail": "OBJECTIVE A \u2014 PLANT AT RELAY A \u00b7 HOLD E \u00b7 STANDARD"
   },
   {
    "test": "grenade stock is exposed to the HUD",
@@ -36,44 +56,29 @@
    "detail": "{\"frag\": 1, \"smoke\": 0, \"flash\": 0}"
   },
   {
-   "test": "approach-lane capture has enemies on screen",
-   "result": "PASS",
-   "detail": "enemies=4"
-  },
-  {
-   "test": "capture 1-approach-lane.jpg: caps",
-   "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 64731}"
-  },
-  {
-   "test": "capture 1-approach-lane.jpg: not black",
-   "result": "PASS",
-   "detail": "mean=[93, 74, 47] dark=0.42"
-  },
-  {
-   "test": "firefight: player alive at shutter",
+   "test": "cover: player alive at shutter",
    "result": "PASS",
    "detail": "hp=100"
   },
   {
-   "test": "firefight: enemy in frame",
+   "test": "cover: enemy in frame",
    "result": "PASS",
-   "detail": "enemies=3"
+   "detail": "enemies=4"
   },
   {
-   "test": "firefight: firing consumed ammo",
+   "test": "cover: objective line visible in HUD",
    "result": "PASS",
-   "detail": "mag=29"
+   "detail": "OBJECTIVE A \u2014 PLANT AT RELAY A \u00b7 HOLD E \u00b7 STANDARD"
   },
   {
-   "test": "capture 2-live-firefight.jpg: caps",
+   "test": "capture 1-cover-firefight.jpg: caps",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 81844}"
+   "detail": "{\"size\": [1280, 800], \"bytes\": 92168}"
   },
   {
-   "test": "capture 2-live-firefight.jpg: not black",
+   "test": "capture 1-cover-firefight.jpg: readable scene",
    "result": "PASS",
-   "detail": "mean=[85, 89, 76] dark=0.002"
+   "detail": "mean=[93, 87, 63] dark=0.002"
   },
   {
    "test": "firing consumes ammo and reload refills the magazine",
@@ -83,7 +88,7 @@
   {
    "test": "simulation cost under 260 ms per simulated second",
    "result": "PASS",
-   "detail": "30.0 ms"
+   "detail": "188.0 ms"
   },
   {
    "test": "objective page is live with no bots",
@@ -93,12 +98,27 @@
   {
    "test": "charge plants on site with a live fuse",
    "result": "PASS",
-   "detail": "{\"state\": \"armed\", \"timer\": 39.54, \"x\": 0, \"z\": -10}"
+   "detail": "{\"state\": \"armed\", \"timer\": 39.61, \"x\": 0, \"z\": -10}"
   },
   {
    "test": "detonation wins the round for the attackers",
    "result": "PASS",
    "detail": "roundEnd {'attack': 1, 'defend': 0}"
+  },
+  {
+   "test": "round summary card names the winner and the reason",
+   "result": "PASS",
+   "detail": "SAPERS WIN THE ROUND | charge detonated \u00b7 round 1 of \u221e | SCORE 1\u20130   INCOME +$3250   K/D 0/0   NEXT ROUND IN 5s"
+  },
+  {
+   "test": "capture 3-round-summary.jpg: caps",
+   "result": "PASS",
+   "detail": "{\"size\": [1280, 800], \"bytes\": 70761}"
+  },
+  {
+   "test": "capture 3-round-summary.jpg: UI overlay filled",
+   "result": "PASS",
+   "detail": "bins=21 bytes=70761"
   },
   {
    "test": "next round starts and score persists",
@@ -116,14 +136,14 @@
    "detail": ""
   },
   {
-   "test": "capture 3-buy-menu.jpg: caps",
+   "test": "site rush mode is wired into the simulation",
    "result": "PASS",
-   "detail": "{\"size\": [1280, 800], \"bytes\": 95306}"
+   "detail": "{\"id\": \"rush\", \"phase\": \"live\", \"rounds\": 3, \"buy\": false, \"economy\": false}"
   },
   {
-   "test": "capture 3-buy-menu.jpg: not black",
+   "test": "buy menu renders ten requisition items",
    "result": "PASS",
-   "detail": "mean=[57, 62, 57] dark=0.0"
+   "detail": ""
   },
   {
    "test": "zero page errors",
@@ -138,14 +158,14 @@
     800
    ],
    "mean": [
-    93,
-    74,
-    47
+    32,
+    37,
+    34
    ],
-   "dark_fraction": 0.42,
-   "palette_bins": 45,
-   "path": "screenshots/1-approach-lane.jpg",
-   "bytes": 64731
+   "dark_fraction": 0.04,
+   "palette_bins": 26,
+   "path": "screenshots/2-briefing.jpg",
+   "bytes": 83373
   },
   {
    "size": [
@@ -153,14 +173,14 @@
     800
    ],
    "mean": [
-    85,
-    89,
-    76
+    93,
+    87,
+    63
    ],
    "dark_fraction": 0.002,
-   "palette_bins": 71,
-   "path": "screenshots/2-live-firefight.jpg",
-   "bytes": 81844
+   "palette_bins": 75,
+   "path": "screenshots/1-cover-firefight.jpg",
+   "bytes": 92168
   },
   {
    "size": [
@@ -168,14 +188,14 @@
     800
    ],
    "mean": [
-    57,
-    62,
-    57
+    15,
+    26,
+    30
    ],
-   "dark_fraction": 0.0,
-   "palette_bins": 20,
-   "path": "screenshots/3-buy-menu.jpg",
-   "bytes": 95306
+   "dark_fraction": 0.002,
+   "palette_bins": 21,
+   "path": "screenshots/3-round-summary.jpg",
+   "bytes": 70761
   }
  ]
 }

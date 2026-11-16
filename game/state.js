@@ -1,5 +1,6 @@
 // Single source of truth: constants, entity factories, economy and round lifecycle.
 import {siteFor,siteHolds} from './map.js';
+import {modeOf,matchOver,matchWinner} from './modes.js';
 export const STEP=1/120;
 export const ROUND_TIME=115, BUY_TIME=12, FUSE_TIME=40, PLANT_TIME=3.2, DEFUSE_TIME=5, END_TIME=6;
 export const WEAPONS={
@@ -41,9 +42,9 @@ export function createBot(id,team,x,z,yaw,loadout){
     target:null,scan:0,alive_for:0,reaction:0.18+((id*37)%17)/100,defusing:0,blind:0,sprayIndex:0,sinceShot:9,
   };
 }
-export function createState(seed=0){
+export function createState(seed=0,mode='standard'){
   return {
-    seed,site:siteFor(seed),
+    seed,site:siteFor(seed),mode:modeOf(mode),briefingShown:false,matchWinner:null,
     phase:'buy',phaseTimer:BUY_TIME,round:1,score:{attack:0,defend:0},winner:null,winReason:'',
     player:createPlayer(),actors:[],projectiles:[],smokes:[],bomb:null,noises:[],roundTime:ROUND_TIME,
     plantProgress:0,lastEvent:'',killFeed:[],summary:null,stats:{shots:0,hits:0,damage:0,killParts:{head:0,body:0}},
@@ -72,7 +73,12 @@ export function spawnRound(s,opts={}){
       s.actors.push(createBot(3+i,'defend',h[0],h[1],Math.PI,i===3?'dmr':'rifle'));
     }
   }
-  s.bomb=null;s.plantProgress=0;s.phase='buy';s.phaseTimer=BUY_TIME;s.roundTime=ROUND_TIME;
+  s.bomb=null;s.plantProgress=0;s.phase='buy';s.phaseTimer=s.mode.buyTime;s.roundTime=s.mode.roundTime;
+  if(!s.mode.buy){s.phase='live';s.phaseTimer=s.mode.roundTime;}
+  if(!s.mode.economy){
+    p.weapon='rifle';p.mag=WEAPONS.rifle.mag;p.reserve=WEAPONS.rifle.reserve;
+    p.armour=50;p.stock.frag=1;p.stock.smoke=0;p.stock.flash=0;p.money=0;
+  }
   s.winner=null;s.winReason='';s.lastEvent='';s.summary=null;
   s.projectiles.length=0;s.smokes.length=0;
   return s;
@@ -85,16 +91,26 @@ export function economyReward(s,winner){
 }
 export function roundOver(s,winner,reason){
   if(s.phase==='roundEnd'||s.phase==='matchEnd')return;
-  s.phase='roundEnd';s.phaseTimer=END_TIME;s.winner=winner;s.winReason=reason;
+  s.phase='roundEnd';s.phaseTimer=s.mode.endTime;s.winner=winner;s.winReason=reason;
   s.score[winner]++;
-  const loser=winner==='attack'?'defend':'attack';
-  const money=economyReward(s,winner);
   const p=s.player;
-  const awarded=winner==='attack'?money.won:money.lost;
-  p.money=Math.min(16000,p.money+awarded+((winner==='attack'&&p.alive)?300:0));
-  s.streak[winner]=0;s.streak[loser]++;
-  s.summary={round:s.round,winner,reason,score:{...s.score},kills:p.kills,deaths:p.deaths,
-    income:awarded,nextIncome:s.economy.winBase+s.economy.winStep*s.round};
+  const winnerSide=winner;
+  const loser=winner==='attack'?'defend':'attack';
+  if(s.mode.economy){
+    const money=economyReward(s,winner);
+    const awarded=winner==='attack'?money.won:money.lost;
+    p.money=Math.min(16000,p.money+awarded+((winner==='attack'&&p.alive)?300:0));
+    s.summary={round:s.round,winner,reason,score:{...s.score},kills:p.kills,deaths:p.deaths,
+      income:awarded,nextIncome:s.economy.winBase+s.economy.winStep*s.round};
+  }else{
+    s.summary={round:s.round,winner,reason,score:{...s.score},kills:p.kills,deaths:p.deaths,
+      income:0,nextIncome:0};
+  }
+  s.streak[winnerSide]=0;s.streak[loser]++;
+  if(matchOver(s)){
+    s.phase='matchEnd';s.phaseTimer=0;s.matchWinner=matchWinner(s);
+    s.summary.matchWinner=s.matchWinner;
+  }
   s.lastEvent=`${winner==='attack'?'RELAY SECURED':'SITE HELD'} — ${reason}`;
   s.killFeed.unshift({t:s.time,text:s.lastEvent});
   if(s.killFeed.length>6)s.killFeed.length=6;
@@ -103,5 +119,5 @@ export function startRound(s,samePhase){
   s.round++;
   s.player.alive=true;s.player.hp=100;
   spawnRound(s,{refill:true,nobots:s.debug.nobots,seed:s.seed});
-  if(samePhase){s.phase='live';s.phaseTimer=ROUND_TIME;}
+  if(samePhase){s.phase='live';s.phaseTimer=s.mode.roundTime;}
 }
